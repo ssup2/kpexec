@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nodepause
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      name: nodepause
+  template:
+    metadata:
+      labels:
+        name: nodepause
+    spec:
+      hostPID: true
+      hostNetwork: true
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      containers:
+      - name: nodepause
+        image: ssup2/nodepause:latest
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        volumeMounts:
+          - name: host-root
+            mountPath: /host
+      volumes:
+      - name: host-root
+        hostPath:
+          path: /
+          type: Directory
