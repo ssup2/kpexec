@@ -16,7 +16,7 @@ $ kubectl apply -f https://raw.githubusercontent.com/ssup2/kpexec/master/deploym
 ~~~
 
 ### Set shell autocompletion (Optional)
-kpexec support shell autocompletion on bash or zsh shell base on kubectl shell autocompletion. Before setting kpexec shell autocompletion, set kubectl shell autocompletion throw below link.
+kpexec support shell autocompletion on bash or zsh shell base on kubectl shell autocompletion. Before setting kpexec shell autocompletion, set kubectl shell autocompletion via the link below.
 * https://kubernetes.io/docs/tasks/tools/install-kubectl/#enabling-shell-autocompletion
 
 #### Bash
