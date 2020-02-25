@@ -343,6 +343,7 @@ func NewCmdKpexec(f cmdutil.Factory, streams genericclioptions.IOStreams) *cobra
 	}
 
 	// Set flags
+	cmdutil.AddPodRunningTimeoutFlag(cmd, defaultPodExecTimeout)
 	cmd.Flags().StringVarP(&options.Namespace, "namespace", "n", "default", "If present, the namespace scope for this CLI request")
 	cmd.Flags().StringVarP(&options.ContainerName, "container", "c", "", "Container name. If omitted, the first container in the pod will be chosen")
 	cmd.Flags().BoolVarP(&options.Stdin, "stdin", "i", false, "Pass stdin to the container")
