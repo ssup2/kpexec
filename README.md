@@ -6,6 +6,7 @@
 ### Install kpexec binary
 Install kpexec throw `go install` through the following command.
 ~~~
+$ go get github.com/ssup2/kpexec/cmd/kpexec
 $ go install github.com/ssup2/kpexec/cmd/kpexec
 ~~~
 
@@ -20,14 +21,14 @@ kpexec support shell autocompletion on bash or zsh shell base on kubectl shell a
 * https://kubernetes.io/docs/tasks/tools/install-kubectl/#enabling-shell-autocompletion
 
 #### Bash
-Set kpexec shell autocompletion to bash shell the following commands.
+Set kpexec shell autocompletion to bash shell through the following commands.
 ~~~
 $ source <(kpexec -C bash) 
 $ echo 'source <(kpexec -C bash)' >>~/.bashrc
 ~~~
 
 #### Zsh
-Set kpexec shell autocompletion to zsh shell the following commands.
+Set kpexec shell autocompletion to zsh shell through the following commands.
 ~~~
 $ source <(kpexec -C zsh) 
 $ echo 'source <(kpexec -C zsh)' >>~/.zshrc
