@@ -8,7 +8,7 @@ import (
 
 func main() {
 	// Run command
-	cmd := cnsenter.NewCmdCnsenter()
+	cmd := cnsenter.New()
 	if err := cmd.Execute(); err != nil {
 		os.Exit(1)
 	}

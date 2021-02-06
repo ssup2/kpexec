@@ -1,15 +1,15 @@
 .PHONY: test build image
 all: test build image
 
-build:
-	GO111MODULE=on CGO_ENABLED=0 go build -a -mod vendor -o kpexec ./cmd/kpexec/main.go
-	GO111MODULE=on CGO_ENABLED=0 go build -a -mod vendor -o cnsenter ./cmd/cnsenter/main.go
+install:
+	CGO_ENABLED=0 GO111MODULE=on go install -a ./cmd/kpexec
 
 image:
-	docker build -f build/nodepause/Dockerfile -t ssup2/nodepause:latest .
+	docker build -f Dockerfile-cnsenter -t ssup2/cnsenter:latest .
+	docker build -f Dockerfile-cnsenter-tools -t ssup2/cnsenter-tools:latest .
 
 clean:
-	rm -f kpexec cnsenter
+	rm -f kpexec
 
 test:
 	go test -v ./...

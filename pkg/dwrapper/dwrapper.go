@@ -2,6 +2,8 @@ package dwrapper
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/containerd/containerd"
 	taskservice "github.com/containerd/containerd/api/services/tasks/v1"
@@ -9,8 +11,10 @@ import (
 )
 
 type Dwrapper struct {
-	client *containerd.Client
-	ctx    context.Context
+	ctx context.Context
+
+	client    *containerd.Client
+	namespace string
 }
 
 func New(dSocket string, ns string) (*Dwrapper, error) {
@@ -21,8 +25,10 @@ func New(dSocket string, ns string) (*Dwrapper, error) {
 	ctx := namespaces.WithNamespace(context.Background(), ns)
 
 	return &Dwrapper{
-		client: client,
-		ctx:    ctx,
+		ctx: ctx,
+
+		client:    client,
+		namespace: ns,
 	}, nil
 }
 
@@ -30,10 +36,10 @@ func (d *Dwrapper) Close() error {
 	return d.client.Close()
 }
 
-func (d *Dwrapper) GetInitPid(cName string) (uint32, error) {
+func (d *Dwrapper) GetInitPid(cID string) (uint32, error) {
 	taskClient := d.client.TaskService()
 	c, err := taskClient.Get(d.ctx, &taskservice.GetRequest{
-		ContainerID: cName,
+		ContainerID: cID,
 	})
 	if err != nil {
 		return 0, err
@@ -41,8 +47,8 @@ func (d *Dwrapper) GetInitPid(cName string) (uint32, error) {
 	return c.Process.Pid, nil
 }
 
-func (d *Dwrapper) GetRootDir(cName string) (string, error) {
-	c, err := d.client.LoadContainer(d.ctx, cName)
+func (d *Dwrapper) GetRootDir(cID string) (string, error) {
+	c, err := d.client.LoadContainer(d.ctx, cID)
 	if err != nil {
 		return "", err
 	}
@@ -50,11 +56,16 @@ func (d *Dwrapper) GetRootDir(cName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return s.Root.Path, nil
+	rootPath := s.Root.Path
+	if !strings.HasPrefix(rootPath, "/") {
+		return fmt.Sprintf("/run/containerd/io.containerd.runtime.v2.task/%s/%s/%s",
+			d.namespace, cID, rootPath), nil
+	}
+	return rootPath, nil
 }
 
-func (d *Dwrapper) GetWorkingDir(cName string) (string, error) {
-	c, err := d.client.LoadContainer(d.ctx, cName)
+func (d *Dwrapper) GetWorkingDir(cID string) (string, error) {
+	c, err := d.client.LoadContainer(d.ctx, cID)
 	if err != nil {
 		return "", err
 	}
@@ -65,8 +76,8 @@ func (d *Dwrapper) GetWorkingDir(cName string) (string, error) {
 	return s.Process.Cwd, nil
 }
 
-func (d *Dwrapper) GetEnv(cName string) ([]string, error) {
-	c, err := d.client.LoadContainer(d.ctx, cName)
+func (d *Dwrapper) GetEnv(cID string) ([]string, error) {
+	c, err := d.client.LoadContainer(d.ctx, cID)
 	if err != nil {
 		return nil, err
 	}

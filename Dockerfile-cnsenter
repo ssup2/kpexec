@@ -1,0 +1,12 @@
+FROM golang:1.16 as builder
+WORKDIR /workspace
+
+# Build cnsenter
+COPY . .
+RUN CGO_ENABLED=0 GO111MODULE=on go build -a -o cnsenter cmd/cnsenter/main.go
+
+# Build image
+FROM alpine:3.13.1
+COPY --from=builder /workspace/cnsenter /usr/bin/cnsenter
+
+CMD ["cnsenter"]

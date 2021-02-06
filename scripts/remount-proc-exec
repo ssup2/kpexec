@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+
+# Remount procfs to only expose container's processes
+# Reference - "/proc and PID namespaces" section in https://man7.org/linux/man-pages/man7/pid_namespaces.7.html
+umount /proc
+mount -t proc proc /proc
+
+# Exec command
+exec $@
