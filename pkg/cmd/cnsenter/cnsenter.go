@@ -23,6 +23,9 @@ var (
 
 		# Run bash command in containerd container's PID namespace and network namespace with two dash
 		cnsenter -r containerd -c [CONTAINER ID] -p -n -- bash -il
+
+		# Run bash command with additional environments
+		cnsenter -r containerd -c [CONTAINER ID] -a key1=value1 -e key2=value2 -- bash -il
 		`
 )
 
@@ -64,6 +67,8 @@ func New() *cobra.Command {
 	cmd.Flags().IntVarP(&options.uid, "setuid", "S", 0, "set uid in entered namespace")
 	cmd.Flags().IntVarP(&options.gid, "setgid", "G", 0, "set gid in entered namespace")
 
+	cmd.Flags().StringArrayVarP(&options.envs, "env", "e", nil, "set a additional environment")
+
 	return cmd
 }
 
@@ -88,6 +93,8 @@ type Options struct {
 
 	uid int
 	gid int
+
+	envs []string
 }
 
 func (o *Options) Run(args []string) error {
@@ -189,6 +196,11 @@ func (o *Options) Run(args []string) error {
 	}
 	if o.gid != 0 {
 		builder.SetOptGid(o.gid)
+	}
+
+	// Append envs
+	for _, env := range o.envs {
+		envs = append(envs, env) // For shells, set TERM env
 	}
 
 	// Run nsenter

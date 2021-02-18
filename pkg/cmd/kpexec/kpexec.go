@@ -320,7 +320,7 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 		cnsPodCmd := []string{"cnsenter", "--pid", "--net", "--ipc", "--uts",
 			"--runtime=" + tContRuntime, "--container=" + tContID,
 			"--root-symlink", cnsContDefaultToolsRoot, "--wd", "--wd-base", cnsContDefaultToolsRoot,
-			"--", "unshare", "--mount", cnsContProcRemountExec}
+			"--env", "TERM=xterm", "--", "unshare", "--mount", cnsContProcRemountExec}
 		cnsPodCmd = append(cnsPodCmd, tPodCmd...)
 		cnsPod.Spec.Containers[0].Command = cnsPodCmd
 
