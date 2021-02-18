@@ -65,7 +65,7 @@ const (
 		kpexec -it -T mypod -c bash-container -- bash 
 
 		# Set cnsenter pod's image
-		kpexec -it -T --cnsenter-image=ssup2/my-cnsenter-tools:latest mypod -c golang-container -- bash
+		kpexec -it -T --cnsenter-img=ssup2/my-cnsenter-tools:latest mypod -c golang-container -- bash
 
 		# Run cnsentor pod garbage collector
 		kpexec --cnsenter-gc
@@ -110,7 +110,7 @@ func New() *cobra.Command {
 	cmd.Flags().BoolVarP(&options.tty, "tty", "t", false, "Stdin is a TTY")
 	cmd.Flags().BoolVarP(&options.tools, "tools", "T", false, "Use tools mode")
 
-	cmd.Flags().StringVar(&options.cnsPodImage, "cnsenter-image", "", "Set cnsenter pod's image")
+	cmd.Flags().StringVar(&options.cnsPodImage, "cnsenter-img", "", "Set cnsenter pod's img")
 	cmd.Flags().Int32Var(&options.cnsPodTimeout, "cnsenter-to", cnsPodDefaultTimeout, "Set cnsenter pod's creation timeout")
 	cmd.Flags().BoolVar(&options.cnsPodGC, "cnsenter-gc", false, "Run cnsenter pod garbage collector")
 
