@@ -49,7 +49,7 @@ $ brew install ssup2/tap/kpexec
 
 ## Set shell autocompletion (Optional)
 
-kpexec supports shell autocompletion on bash or zsh shell. Before setting kpexec shell autocompletion, enable shell autocompletion via the link below.
+kpexec supports shell autocompletion on Bash or Zsh shell. Before setting kpexec shell autocompletion, enable shell autocompletion via the link below.
 * https://kubernetes.io/docs/tasks/tools/install-kubectl/#enabling-shell-autocompletion
 
 ### Bash
@@ -57,7 +57,7 @@ kpexec supports shell autocompletion on bash or zsh shell. Before setting kpexec
 Set kpexec shell autocompletion to bash shell through the following commands.
 ```bash
 $ source <(kpexec --completion bash) 
-$ echo 'source <(kpexec --completion bash)' >>~/.bashrc
+$ sudo sh -c "echo 'source <(kpexec --completion bash)' >>~/.bashrc"
 ```
 
 ### Zsh
@@ -65,7 +65,7 @@ $ echo 'source <(kpexec --completion bash)' >>~/.bashrc
 Set kpexec shell autocompletion to zsh shell through the following commands.
 ```bash
 $ source <(kpexec --completion zsh) 
-$ echo 'source <(kpexec --completion zsh)' >>~/.zshrc
+$ sudo sh -c "echo 'source <(kpexec --completion zsh)' >>~/.zshrc"
 ```
 
 ## Usage 
