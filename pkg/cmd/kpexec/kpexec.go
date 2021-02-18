@@ -67,7 +67,7 @@ const (
 		# Set cnsenter pod's image
 		kpexec -it -T --cnsenter-img=ssup2/my-cnsenter-tools:latest mypod -c golang-container -- bash
 
-		# Run cnsentor pod garbage collector
+		# Run cnsenter pod garbage collector
 		kpexec --cnsenter-gc
 		`
 )
@@ -449,7 +449,7 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 		if !strings.Contains(err.Error(), "completed pod") {
 			return fmt.Errorf("failed to attach to cnsenter pod : %+v", err)
 		}
-		// If cnsentor pod is terminated, get it's log
+		// If cnsenter pod is terminated, get it's log
 	}
 
 	// Get cnsenter pod's logs
