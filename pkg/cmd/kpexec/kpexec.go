@@ -110,6 +110,7 @@ func New() *cobra.Command {
 	cmd.Flags().BoolVarP(&options.tty, "tty", "t", false, "Stdin is a TTY")
 	cmd.Flags().BoolVarP(&options.tools, "tools", "T", false, "Use tools mode")
 
+	cmd.Flags().StringVar(&options.cnsPodNamespace, "cnsenter-ns", "", "Set cnsenter pod's namespace (default target pod's namespace)")
 	cmd.Flags().StringVar(&options.cnsPodImage, "cnsenter-img", "", "Set cnsenter pod's img")
 	cmd.Flags().Int32Var(&options.cnsPodTimeout, "cnsenter-to", cnsPodDefaultTimeout, "Set cnsenter pod's creation timeout")
 	cmd.Flags().BoolVar(&options.cnsPodGC, "cnsenter-gc", false, "Run cnsenter pod garbage collector")
@@ -137,9 +138,10 @@ type Options struct {
 	stdin     bool
 	tools     bool
 
-	cnsPodImage   string
-	cnsPodTimeout int32
-	cnsPodGC      bool
+	cnsPodNamespace string
+	cnsPodImage     string
+	cnsPodTimeout   int32
+	cnsPodGC        bool
 
 	kubeconfig string
 	completion string
@@ -263,8 +265,7 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 
 	cnsPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cnsPodName,
-			Namespace: o.tPodNs,
+			Name: cnsPodName,
 			Labels: map[string]string{
 				cnsPodLabelKey: cnsPodLabelValue,
 			},
@@ -378,26 +379,29 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 		cnsPod.Spec.Containers[0].Command = cnsPodCmd
 	}
 
-	// Set cnsenter pod's image
+	// Set cnsenter pod's namespace and image
+	if o.cnsPodNamespace == "" {
+		o.cnsPodNamespace = o.tPodNs
+	}
 	if o.cnsPodImage != "" {
 		cnsPod.Spec.Containers[0].Image = o.cnsPodImage
 	}
 
 	// Create a cnsenter pod
-	_, err = clientset.CoreV1().Pods(o.tPodNs).Create(context.TODO(), cnsPod, metav1.CreateOptions{})
+	_, err = clientset.CoreV1().Pods(o.cnsPodNamespace).Create(context.TODO(), cnsPod, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to create cnsetner pod : %+v", err)
 	}
 	defer func() {
 		// Delete cnsenter pod
-		if err := clientset.CoreV1().Pods(o.tPodNs).Delete(context.TODO(), cnsPodName, metav1.DeleteOptions{}); err != nil {
+		if err := clientset.CoreV1().Pods(o.cnsPodNamespace).Delete(context.TODO(), cnsPodName, metav1.DeleteOptions{}); err != nil {
 			fmt.Printf("Failed to delete to cnsenter pod : %+v\n", err)
 		}
 	}()
 
 	// Wait cnsenter container to run
 	// Watch cnsenter pod
-	cnsPodWatch, err := clientset.CoreV1().Pods(o.tPodNs).
+	cnsPodWatch, err := clientset.CoreV1().Pods(o.cnsPodNamespace).
 		Watch(context.TODO(), metav1.ListOptions{Watch: true, FieldSelector: "metadata.name=" + cnsPodName})
 	if err != nil {
 		return fmt.Errorf("failed to wait running cnsenter pod : %+v", err)
@@ -409,7 +413,7 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 		fmt.Printf("Failed to wait cnsenter pod\n")
 
 		// Delete cnsenter pod and exit
-		if err := clientset.CoreV1().Pods(o.tPodNs).Delete(context.TODO(), cnsPodName, metav1.DeleteOptions{}); err != nil {
+		if err := clientset.CoreV1().Pods(o.cnsPodNamespace).Delete(context.TODO(), cnsPodName, metav1.DeleteOptions{}); err != nil {
 			fmt.Printf("Failed to delete to cnsenter pod : %+v\n", err)
 		}
 		os.Exit(1)
@@ -427,7 +431,7 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 
 	// Attach cnsenter pod
 	if (o.tty || o.stdin) && tPod.Status.Phase == corev1.PodRunning {
-		if err := attachPod(o.tPodNs, cnsPodName, "cnsenter", o.tty, o.stdin); err == nil {
+		if err := attachPod(o.cnsPodNamespace, cnsPodName, "cnsenter", o.tty, o.stdin); err == nil {
 			return nil
 		}
 
@@ -439,7 +443,7 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 	}
 
 	// Get cnsenter pod's logs
-	cnsLogReq := clientset.CoreV1().Pods(o.tPodNs).GetLogs(cnsPodName, &corev1.PodLogOptions{Follow: true})
+	cnsLogReq := clientset.CoreV1().Pods(o.cnsPodNamespace).GetLogs(cnsPodName, &corev1.PodLogOptions{Follow: true})
 	cnsLog, err := cnsLogReq.Stream(context.TODO())
 	if err != nil {
 		return fmt.Errorf("failed to get cnsenter pod's log stream : %+v", err)
