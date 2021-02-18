@@ -111,7 +111,7 @@ func New() *cobra.Command {
 	cmd.Flags().BoolVarP(&options.tools, "tools", "T", false, "Use tools mode")
 
 	cmd.Flags().StringVar(&options.cnsPodNamespace, "cnsenter-ns", "", "Set cnsenter pod's namespace (default target pod's namespace)")
-	cmd.Flags().StringVar(&options.cnsPodImage, "cnsenter-img", "", "Set cnsenter pod's img")
+	cmd.Flags().StringVar(&options.cnsPodImage, "cnsenter-img", "", "Set cnsenter pod's img (default mode ssup2/cnsenter:latest / tools mode ssup2/cnsenter-tools:latest)")
 	cmd.Flags().Int32Var(&options.cnsPodTimeout, "cnsenter-to", cnsPodDefaultTimeout, "Set cnsenter pod's creation timeout")
 	cmd.Flags().BoolVar(&options.cnsPodGC, "cnsenter-gc", false, "Run cnsenter pod garbage collector")
 
