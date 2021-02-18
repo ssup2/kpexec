@@ -207,10 +207,20 @@ func (o *Options) GarbageCollect() error {
 }
 
 func (o *Options) Run(args []string, argsLenAtDash int) error {
-	// Check and set target pod's Name and command
-	if argsLenAtDash != 1 || len(args) == 1 {
-		return fmt.Errorf("wrong format")
+	// Check inputs
+	// Check pod name by using double dash
+	if argsLenAtDash == -1 {
+		return fmt.Errorf("no double dash")
+	} else if argsLenAtDash == 0 {
+		return fmt.Errorf("no target pod name")
+	} else if argsLenAtDash >= 2 {
+		return fmt.Errorf("wrong pod name")
 	}
+	// Chech commands
+	if len(args) <= 1 {
+		return fmt.Errorf("no commands")
+	}
+
 	tPodName := args[argsLenAtDash-1]
 	tPodCmd := args[argsLenAtDash:]
 
