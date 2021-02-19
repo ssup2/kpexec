@@ -9,8 +9,10 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -407,6 +409,20 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 		if err := clientset.CoreV1().Pods(o.cnsPodNamespace).Delete(context.TODO(), cnsPodName, metav1.DeleteOptions{}); err != nil {
 			fmt.Printf("Failed to delete to cnsenter pod : %+v\n", err)
 		}
+	}()
+
+	// Set signal handler to delete cnsenterpod
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	go func() {
+		sig := <-sigs
+		fmt.Printf("Recived signal %s\n", sig)
+
+		// Delete cnsenter pod and exit
+		if err := clientset.CoreV1().Pods(o.cnsPodNamespace).Delete(context.TODO(), cnsPodName, metav1.DeleteOptions{}); err != nil {
+			fmt.Printf("Failed to delete to cnsenter pod : %+v\n", err)
+		}
+		os.Exit(1)
 	}()
 
 	// Wait cnsenter container to run
