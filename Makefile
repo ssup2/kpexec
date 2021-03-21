@@ -1,15 +1,19 @@
-.PHONY: test build image
-all: test build image
+.PHONY: all
+all: test install image
 
+.PHONY: install
 install:
 	CGO_ENABLED=0 GO111MODULE=on go install -a ./cmd/kpexec
 
+.PHONY: image
 image:
 	docker build -f Dockerfile-cnsenter -t ssup2/cnsenter:latest .
 	docker build -f Dockerfile-cnsenter-tools -t ssup2/cnsenter-tools:latest .
 
+.PHONY: clean
 clean:
 	rm -f kpexec
 
+.PHONY: test
 test:
 	go test -v ./...
