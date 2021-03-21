@@ -21,7 +21,7 @@ Whenever kpexec is executed, kpexec creates a cnsenter (Container Namespace Ente
 Install via download the kpexec binary
 
 ```bash
-$ export KPEXEC_VERSION=0.2.3
+$ export KPEXEC_VERSION=0.2.4
 
 # Linux / amd64
 $ wget -c "https://github.com/ssup2/kpexec/releases/download/v${KPEXEC_VERSION}/kpexec_${KPEXEC_VERSION}_Linux_amd64.tar.gz" -O - | tar -C /usr/local/bin/ -xz
