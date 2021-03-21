@@ -14,13 +14,15 @@ builds:
   goarch:
   - amd64
   - arm64
+  ldflags:
+  - -X main.version={{ .Tag }}
 archives:
 - replacements:
     darwin: Darwin
     linux: Linux
     windows: Windows
 checksum:
-  name_template: 'checksums.txt'
+  name_template: checksums.txt
 changelog:
   sort: asc
 brews:
@@ -31,8 +33,8 @@ brews:
     commit_author:
       name: ssup2
       email: supsup5642@gmail.com
-    homepage: "https://github.com/ssup2/kpexec"
-    description: "Execute a commad in a running container with privilege"
-    license: "MIT"
+    homepage: https://github.com/ssup2/kpexec
+    description: Execute a commad in a running container with privilege
+    license: MIT
     install: |
       bin.install "kpexec"

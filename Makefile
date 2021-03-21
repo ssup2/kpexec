@@ -3,7 +3,7 @@ all: test install image
 
 .PHONY: install
 install:
-	CGO_ENABLED=0 GO111MODULE=on go install -a ./cmd/kpexec
+	CGO_ENABLED=0 GO111MODULE=on go install -a -ldflags="-X 'github.com/ssup2/kpexec/pkg/cmd/kpexec.version=test'" ./cmd/kpexec
 
 .PHONY: image
 image:

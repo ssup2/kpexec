@@ -74,6 +74,11 @@ const (
 		`
 )
 
+// Var
+var (
+	version = "latest"
+)
+
 // Cmd
 func New() *cobra.Command {
 	// Get cobra cmd
@@ -85,7 +90,9 @@ func New() *cobra.Command {
 		Long:                  "Execute a command with privilige in a container.",
 		Example:               kpexecExample,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(options.completion) != 0 {
+			if options.version {
+				fmt.Printf("version: %s\n", version)
+			} else if len(options.completion) != 0 {
 				if err := options.Complete(cmd, args); err != nil {
 					fmt.Printf("Failed to get bash/zsh completion : %+v\n", err)
 					os.Exit(1)
@@ -119,6 +126,7 @@ func New() *cobra.Command {
 
 	cmd.Flags().StringVar(&options.kubeconfig, "kubeconfig", filepath.Join(homedir.HomeDir(), ".kube", "config"), "Absolute path to the kubeconfig file")
 	cmd.Flags().StringVar(&options.completion, "completion", "", "Output shell completion code for the specified shell (bash or zsh)")
+	cmd.Flags().BoolVarP(&options.version, "version", "v", false, "Show version")
 
 	// Set bash completion flags
 	for name, completion := range bashCompletionFlags {
@@ -147,6 +155,7 @@ type Options struct {
 
 	kubeconfig string
 	completion string
+	version    bool
 }
 
 func (o *Options) Complete(cmd *cobra.Command, args []string) error {
@@ -218,7 +227,7 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 	} else if argsLenAtDash >= 2 {
 		return fmt.Errorf("wrong pod name")
 	}
-	// Chech commands
+	// Check commands
 	if len(args) <= 1 {
 		return fmt.Errorf("no commands")
 	}
