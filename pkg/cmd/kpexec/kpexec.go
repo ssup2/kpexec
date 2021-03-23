@@ -36,8 +36,8 @@ const (
 	cnsPodLabelValue     = "cnsenter"
 
 	cnsContName             = "cnsenter"
-	cnsContDefaultImg       = "ssup2/cnsenter:latest"
-	cnsContDefaultToolsImg  = "ssup2/cnsenter-tools:latest"
+	cnsContDefaultImg       = "ssup2/cnsenter"
+	cnsContDefaultToolsImg  = "ssup2/cnsenter-tools"
 	cnsContDefaultToolsRoot = "/croot"
 	cnsContProcRemountExec  = "remount-proc-exec"
 
@@ -120,7 +120,7 @@ func New() *cobra.Command {
 	cmd.Flags().BoolVarP(&options.tools, "tools", "T", false, "Use tools mode")
 
 	cmd.Flags().StringVar(&options.cnsPodNamespace, "cnsenter-ns", "", "Set cnsenter pod's namespace (default target pod's namespace)")
-	cmd.Flags().StringVar(&options.cnsPodImage, "cnsenter-img", "", "Set cnsenter pod's img (default mode ssup2/cnsenter:latest / tools mode ssup2/cnsenter-tools:latest)")
+	cmd.Flags().StringVar(&options.cnsPodImage, "cnsenter-img", "", fmt.Sprintf("Set cnsenter pod's img (default mode ssup2/cnsenter:%s / tools mode ssup2/cnsenter-tools:%s)", version, version))
 	cmd.Flags().Int32Var(&options.cnsPodTimeout, "cnsenter-to", cnsPodDefaultTimeout, "Set cnsenter pod's creation timeout")
 	cmd.Flags().BoolVar(&options.cnsPodGC, "cnsenter-gc", false, "Run cnsenter pod garbage collector")
 
@@ -296,7 +296,6 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 			Containers: []corev1.Container{
 				{
 					Name:  cnsContName,
-					Image: cnsContDefaultImg,
 					Stdin: o.stdin,
 					TTY:   o.tty,
 					VolumeMounts: []corev1.VolumeMount{
@@ -334,7 +333,7 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 	if o.tools {
 		// For tools mode
 		// Use tools image
-		cnsPod.Spec.Containers[0].Image = cnsContDefaultToolsImg
+		cnsPod.Spec.Containers[0].Image = fmt.Sprintf("%s:%s", cnsContDefaultToolsImg, strings.TrimPrefix(version, "v"))
 
 		// Set command
 		// Do not enter mount namespace
@@ -391,7 +390,7 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 	} else {
 		// For default mode
 		// Use default image
-		cnsPod.Spec.Containers[0].Image = cnsContDefaultImg
+		cnsPod.Spec.Containers[0].Image = fmt.Sprintf("%s:%s", cnsContDefaultImg, strings.TrimPrefix(version, "v"))
 
 		// Set command
 		cnsPodCmd := []string{"cnsenter", "--mount", "--pid", "--net", "--ipc", "--uts",

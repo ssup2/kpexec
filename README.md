@@ -103,5 +103,5 @@ $ kpexec --cnsenter-gc
 The figure above shows the operation processs of kpexec. At first, kpexec obtains the information of target pod from K8s API Server and finds out which Node the target pod exists in. After that, kpexec creates a cnsenter pod in the node where target pod exists and executes cnsetner. cnsenter gets the target container's pid and root directory information from containerd. Then cnsetner executes the command in the target container based on the obtained information.
 
 cnsenter pod uses the below images defaultly. The cnsenter pod image can be set with the '--cnsetner-image' option.
-* default mode - ssup2/cnsenter:latest
-* tools mode - ssup2/cnsenter-tools:latest
+* default mode - ssup2/cnsenter:[kpexec version]
+* tools mode - ssup2/cnsenter-tools:[kpexec version]
