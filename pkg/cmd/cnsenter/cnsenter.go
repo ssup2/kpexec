@@ -41,7 +41,7 @@ func New() *cobra.Command {
 		Example:               cnsenterExample,
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := options.Run(args); err != nil {
-				fmt.Printf("failed to run cnsenter : %+v", err)
+				fmt.Printf("failed to run cnsenter : %+v\n", err)
 				os.Exit(1)
 			}
 		},
