@@ -1,6 +1,6 @@
 # kpexec
 
-[![kpexec_demo](https://asciinema.org/a/vxAu0lN2X8AeR0T6OcnG21suw.svg)](https://asciinema.org/a/vxAu0lN2X8AeR0T6OcnG21suw)
+![kpexec Demo](image/kpexec_Demo.gif)
 
 **kpexec** is a kubernetes cli that runs commands in a container with high privilege. kubectl-exec runs the command with the same privileges as the container. For example, if a container does not have network privileges, the command executed by kubectl-exec also has no network privileges. Also, kubectl-exec does not provide an option to force command to run with high privileges. This makes debugging the pod difficult. 
 
@@ -98,7 +98,7 @@ $ kpexec --cnsenter-gc
 
 ## How it works
 
-![kpexec Operation](image/kpexec_Operation.PNG)
+![kpexec Operation](image/kpexec_Operation.png)
 
 The figure above shows the operation processs of kpexec. At first, kpexec obtains the information of target pod from K8s API Server and finds out which Node the target pod exists in. After that, kpexec creates a cnsenter pod in the node where target pod exists and executes cnsetner. cnsenter gets the target container's pid and root directory information from containerd. Then cnsetner executes the command in the target container based on the obtained information.
 
