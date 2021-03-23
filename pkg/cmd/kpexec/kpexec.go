@@ -409,6 +409,7 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 	}
 
 	// Create a cnsenter pod
+	fmt.Printf("Create cnsenter pod\n")
 	_, err = clientset.CoreV1().Pods(o.cnsPodNamespace).Create(context.TODO(), cnsPod, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to create cnsetner pod : %+v", err)
@@ -457,7 +458,7 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 		os.Exit(1)
 	}()
 	// Wait and check pod's status
-	fmt.Printf("Creating cnsenter pod\n")
+	fmt.Printf("Wait to run cnsenter pod\n")
 	for cnsPodEvent := range cnsPodWatch.ResultChan() {
 		tPod, _ = cnsPodEvent.Object.(*corev1.Pod)
 		if tPod.Status.Phase == corev1.PodRunning || tPod.Status.Phase == corev1.PodSucceeded || tPod.Status.Phase == corev1.PodFailed {
