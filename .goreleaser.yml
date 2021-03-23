@@ -2,31 +2,61 @@
 # Make sure to check the documentation at http://goreleaser.com
 before:
   hooks:
-  - go mod download
+    - go mod download
 builds:
-- main: ./cmd/kpexec/main.go
-  env:
-  - CGO_ENABLED=0
-  goos:
-  - linux
-  - darwin
-  - windows
-  goarch:
-  - amd64
-  - arm64
-  ldflags:
-  - -X github.com/ssup2/kpexec/pkg/cmd/kpexec.version={{ .Tag }}
+  - id: kpexec
+    main: ./cmd/kpexec/main.go
+    binary: kpexec
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -X github.com/ssup2/kpexec/pkg/cmd/kpexec.version={{ .Tag }}
+  - id: kubectl-pexec
+    main: ./cmd/kpexec/main.go
+    binary: kubectl-pexec
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -X github.com/ssup2/kpexec/pkg/cmd/kpexec.version={{ .Tag }}
 archives:
-- replacements:
-    darwin: Darwin
-    linux: Linux
-    windows: Windows
+  - id: kpexec
+    builds:
+      - kpexec
+    name_template: "kpexec_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
+    replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+  - id: kubectl-pexec
+    builds:
+      - kubectl-pexec
+    name_template: "kubectl_pexec_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
+    replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
 checksum:
   name_template: checksums.txt
 changelog:
   sort: asc
 brews:
   - name: kpexec
+    ids:
+      - kpexec
     tap:
       owner: ssup2
       name: homebrew-tap
