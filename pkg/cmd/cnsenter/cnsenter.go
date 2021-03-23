@@ -14,9 +14,7 @@ const (
 
 	OptRuntimeContainerd = "containerd"
 	OptRuntimeDocker     = "docker"
-)
 
-var (
 	cnsenterExample = `
 		# Run date command in all docker container's namespaces.
 		cnsenter -r docker -c [CONTAINER ID] -a date
@@ -27,6 +25,10 @@ var (
 		# Run bash command with additional environments
 		cnsenter -r containerd -c [CONTAINER ID] -a key1=value1 -e key2=value2 -- bash -il
 		`
+)
+
+var (
+	version = "latest"
 )
 
 // Cmd
@@ -40,9 +42,13 @@ func New() *cobra.Command {
 		Long:                  "Execute a command in a container.",
 		Example:               cnsenterExample,
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := options.Run(args); err != nil {
-				fmt.Printf("failed to run cnsenter : %+v\n", err)
-				os.Exit(1)
+			if options.version {
+				fmt.Printf("version: %s\n", version)
+			} else {
+				if err := options.Run(args); err != nil {
+					fmt.Printf("failed to run cnsenter : %+v\n", err)
+					os.Exit(1)
+				}
 			}
 		},
 	}
@@ -68,6 +74,8 @@ func New() *cobra.Command {
 	cmd.Flags().IntVarP(&options.gid, "setgid", "G", 0, "set gid in entered namespace")
 
 	cmd.Flags().StringArrayVarP(&options.envs, "env", "e", nil, "set a additional environment")
+
+	cmd.Flags().BoolVarP(&options.version, "version", "v", false, "Show version")
 
 	return cmd
 }
@@ -95,6 +103,8 @@ type Options struct {
 	gid int
 
 	envs []string
+
+	version bool
 }
 
 func (o *Options) Run(args []string) error {

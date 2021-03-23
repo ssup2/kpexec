@@ -7,8 +7,8 @@ install:
 
 .PHONY: image
 image:
-	docker build -f Dockerfile-cnsenter -t ssup2/cnsenter:latest .
-	docker build -f Dockerfile-cnsenter-tools -t ssup2/cnsenter-tools:latest .
+	docker build --build-arg VERSION=latest -f Dockerfile-cnsenter -t ssup2/cnsenter:latest .
+	docker build --build-arg VERSION=latest -f Dockerfile-cnsenter-tools -t ssup2/cnsenter-tools:latest .
 
 .PHONY: clean
 clean:
