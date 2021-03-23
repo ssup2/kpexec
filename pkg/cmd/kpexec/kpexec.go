@@ -415,6 +415,7 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 	}
 	defer func() {
 		// Delete cnsenter pod
+		fmt.Printf("Delete cnsenter pod\n")
 		if err := clientset.CoreV1().Pods(o.cnsPodNamespace).Delete(context.TODO(), cnsPodName, metav1.DeleteOptions{}); err != nil {
 			fmt.Printf("Failed to delete to cnsenter pod : %+v\n", err)
 		}
@@ -428,6 +429,7 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 		fmt.Printf("Recived signal %s\n", sig)
 
 		// Delete cnsenter pod and exit
+		fmt.Printf("Delete cnsenter pod\n")
 		if err := clientset.CoreV1().Pods(o.cnsPodNamespace).Delete(context.TODO(), cnsPodName, metav1.DeleteOptions{}); err != nil {
 			fmt.Printf("Failed to delete to cnsenter pod : %+v\n", err)
 		}
@@ -448,12 +450,14 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 		fmt.Printf("Failed to wait cnsenter pod\n")
 
 		// Delete cnsenter pod and exit
+		fmt.Printf("Delete cnsenter pod\n")
 		if err := clientset.CoreV1().Pods(o.cnsPodNamespace).Delete(context.TODO(), cnsPodName, metav1.DeleteOptions{}); err != nil {
 			fmt.Printf("Failed to delete to cnsenter pod : %+v\n", err)
 		}
 		os.Exit(1)
 	}()
 	// Wait and check pod's status
+	fmt.Printf("Creating cnsenter pod\n")
 	for cnsPodEvent := range cnsPodWatch.ResultChan() {
 		tPod, _ = cnsPodEvent.Object.(*corev1.Pod)
 		if tPod.Status.Phase == corev1.PodRunning || tPod.Status.Phase == corev1.PodSucceeded || tPod.Status.Phase == corev1.PodFailed {
