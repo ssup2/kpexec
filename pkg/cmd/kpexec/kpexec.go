@@ -470,7 +470,7 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 
 	// Attach cnsenter pod
 	if (o.tty || o.stdin) && tPod.Status.Phase == corev1.PodRunning {
-		if err := attachPod(o.cnsPodNamespace, cnsPodName, "cnsenter", o.tty, o.stdin); err == nil {
+		if err := attachPod(o.kubeconfig, o.cnsPodNamespace, cnsPodName, "cnsenter", o.tty, o.stdin); err == nil {
 			return nil
 		}
 
@@ -528,9 +528,9 @@ func getRandomString(n int) string {
 	return string(s)
 }
 
-func attachPod(podNs, podName, contName string, tty, stdin bool) error {
+func attachPod(kubeconfig, podNs, podName, contName string, tty, stdin bool) error {
 	// Set kubectl attach args
-	args := []string{"attach", "--namespace", podNs, podName, "--container", contName}
+	args := []string{"--kubeconfig", kubeconfig, "attach", "--namespace", podNs, podName, "--container", contName}
 	if tty {
 		args = append(args, "--tty")
 	}
