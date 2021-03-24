@@ -16,14 +16,14 @@ kpexec now supports the following CPU architectures.
 
 ## Install 
 
-Whenever kpexec is executed, kpexec creates a cnsenter (Container Namespace Enter) pod to executes cnsenter. cnsenter is a command to exec command in the target container. The cnsenter pod must be created with **hostPID** and **Privileged** Option. Therefore, before using kpexec, you should check if the pod options mentioned are available in your kubernetes cluster. 
+Since kpexec uses kubectl internally, **kubectl** installation and **kubeconfig** files must be properly configured before using kpexec. Whenever kpexec is executed, kpexec creates a cnsenter (Container Namespace Enter) pod to executes cnsenter. cnsenter is a command to exec command in the target container. The cnsenter pod must be created with **hostPID** and **Privileged** Option. Therefore, before using kpexec, you should check if the pod options mentioned are available in your kubernetes cluster. 
 
 ### Download Binary
 
 Install via download the kpexec binary
 
 ```bash
-$ export KPEXEC_VERSION=0.2.6
+$ export KPEXEC_VERSION=0.2.7
 
 # Linux / amd64
 $ wget -c "https://github.com/ssup2/kpexec/releases/download/v${KPEXEC_VERSION}/kpexec_${KPEXEC_VERSION}_Linux_amd64.tar.gz" -O - | tar -C /usr/local/bin/ -xz
