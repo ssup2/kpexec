@@ -2,9 +2,9 @@
 
 ![kpexec Demo](image/kpexec_Demo.gif)
 
-**kpexec** is a kubernetes cli that runs commands in a container with high privileges. kubectl-exec runs the command with the same privileges as the container. For example, if a container does not have network privileges, the command executed by kubectl-exec also has no network privileges. Also, kubectl-exec does not provide an option to force command to run with high privileges. This makes debugging the pod difficult. 
+**kpexec** is a kubernetes cli that runs commands in a container with high privileges. It runs a highly privileged container on the same node as the target container and joins into the namespaces of the target container (IPC, UTS, PID, net, mount). This is useful for debugging where you often need to execute commands with high privileges. Also, kpexec has a tools mode, which adds useful debugging tools into the debugged container. The tools mode is useful when there necessary debugging tools are missing in the target container.
 
-kpexec helps execute pod debugging smoothly by executing commands with high privileges regardless of container privileges. Also, kpexec supports **tools** mode. If you use tools mode, you can execute tools (commands) that do not exist in the container. The tools mode is useful when there are no tools necessary for debugging in the target container.
+In contrast, kubectl-exec runs the command with the same privileges as the container. For example, if a container does not have network privileges, the command executed by kubectl-exec also has no network privileges. This makes debugging the pod difficult. If you use kpexec instead of kubectl-exec, you can easily get high privileges for debugging.
 
 kpexec now supports the following container runtimes.
 * containerd
@@ -23,7 +23,7 @@ Since kpexec uses kubectl internally, **kubectl** installation and **kubeconfig*
 Install via download the kpexec binary
 
 ```bash
-$ export KPEXEC_VERSION=0.2.7
+$ export KPEXEC_VERSION=0.2.8
 
 # Linux / amd64
 $ wget -c "https://github.com/ssup2/kpexec/releases/download/v${KPEXEC_VERSION}/kpexec_${KPEXEC_VERSION}_Linux_amd64.tar.gz" -O - | tar -C /usr/local/bin/ -xz
@@ -43,10 +43,18 @@ $ wget -c "https://github.com/ssup2/kpexec/releases/download/v${KPEXEC_VERSION}/
 
 ### Homebrew
 
-Install via Homebrew
+Install via Homebrew.
 
 ```bash
 $ brew install ssup2/tap/kpexec
+```
+
+### Krew
+
+Install via Krew. kpexec is registered with krew under the name **pexec**. If you installed kpexec through Krew, you should use the **kubectl pexec** command instead of the kpexec command. And in this case, shell autocompetion doesn't work.
+
+```bash
+$ kubectl krew install pexec
 ```
 
 ## Set shell autocompletion (Optional)
