@@ -2,7 +2,7 @@
 
 ![kpexec Demo](image/kpexec_Demo.gif)
 
-**kpexec** is a kubernetes cli that runs commands in a container with high privileges. It runs a highly privileged container on the same node as the target container and joins into the namespaces of the target container (IPC, UTS, PID, net, mount). This is useful for debugging where you often need to execute commands with high privileges. Also, kpexec has a tools mode, which adds useful debugging tools into the debugged container. The tools mode is useful when there necessary debugging tools are missing in the target container.
+**kpexec** is a kubernetes cli that runs commands in a container with high privileges. It runs a highly privileged container on the same node as the target container and joins into the namespaces of the target container (IPC, UTS, PID, net, mount). This is useful for debugging where you often need to execute commands with high privileges. Also, kpexec has a **tools mode**, which adds useful debugging tools into the debugged container. The tools mode is useful when there necessary debugging tools are missing in the target container.
 
 In contrast, kubectl-exec runs the command with the same privileges as the container. For example, if a container does not have network privileges, the command executed by kubectl-exec also has no network privileges. This makes debugging the pod difficult. If you use kpexec instead of kubectl-exec, you can easily get high privileges for debugging.
 
