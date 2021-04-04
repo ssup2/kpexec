@@ -32,6 +32,11 @@ func init() {
 
 // Const
 const (
+	buildStandAlone     = "standAlone"
+	buildKubectlPlugin  = "kubectlPlugin"
+	binaryStandAlone    = "kpexec"
+	binaryKubectlPlugin = "kubectl pexec"
+
 	cnsPodDefaultTimeout = 30
 	cnsPodLabelKey       = "kpexec.ssup2"
 	cnsPodLabelValue     = "cnsenter"
@@ -53,45 +58,62 @@ const (
 	contRootDockerVolume = "container-docker-root"
 	contRootDockerPath   = "/var/lib/docker"
 
-	kpexecExample = `
+	flagHelpTemplate   = "help for {{.binary}}"
+	cmdUseTemplate     = "{{.binary}} [-n NAMESPACE] POD [-c CONTAINER] -- COMMAND [args...]"
+	cmdExampleTemplate = `
 		# Get output from running 'date' command from pod mypod, using the first container by default
-		kpexec mypod -- date
+		{{.binary}} mypod -- date
 
 		# Get output from running 'date' command in date-container from pod mypod and namespace mynamespace 
-		kpexec -n mynamespace mypod -c date-container -- date
+		{{.binary}} -n mynamespace mypod -c date-container -- date
 
 		# Switch to raw terminal mode, sends stdin to 'bash' in bash-container from pod mypod
 		# and sends stdout/stderr from 'bash' back to the client
-		kpexec -it mypod -c bash-container -- bash 
+		{{.binary}} -it mypod -c bash-container -- bash 
 
 		# Enable 'tools' mode
-		kpexec -it -T mypod -c bash-container -- bash 
+		{{.binary}} -it -T mypod -c bash-container -- bash 
 
 		# Set cnsenter pod's image
-		kpexec -it -T --cnsenter-img=ssup2/my-cnsenter-tools:latest mypod -c golang-container -- bash
+		{{.binary}} -it -T --cnsenter-img=ssup2/my-cnsenter-tools:latest mypod -c golang-container -- bash
 
 		# Run cnsenter pod garbage collector
-		kpexec --cnsenter-gc
+		{{.binary}} --cnsenter-gc
 		`
 )
 
 // Var
 var (
 	version = "latest"
+	build   = buildStandAlone
 )
 
 // Cmd
 func New() *cobra.Command {
+	// Set help, use and command example
+	var flagHelp, cmdUse, cmdExample string
+	if build == buildStandAlone {
+		flagHelp = strings.ReplaceAll(flagHelpTemplate, "{{.binary}}", binaryStandAlone)
+		cmdUse = strings.ReplaceAll(cmdUseTemplate, "{{.binary}}", binaryStandAlone)
+		cmdExample = strings.ReplaceAll(cmdExampleTemplate, "{{.binary}}", binaryStandAlone)
+	} else {
+		flagHelp = strings.ReplaceAll(flagHelpTemplate, "{{.binary}}", binaryKubectlPlugin)
+		cmdUse = strings.ReplaceAll(cmdUseTemplate, "{{.binary}}", binaryKubectlPlugin)
+		cmdExample = strings.ReplaceAll(cmdExampleTemplate, "{{.binary}}", binaryKubectlPlugin)
+	}
+
 	// Get cobra cmd
 	options := &Options{}
 	cmd := &cobra.Command{
-		Use:                   "kpexec [-n NAMESPACE] POD [-c CONTAINER] -- COMMAND [args...]",
+		Use:                   cmdUse,
 		DisableFlagsInUseLine: true,
 		Short:                 "Execute a command with privilige in a container.",
 		Long:                  "Execute a command with privilige in a container.",
-		Example:               kpexecExample,
+		Example:               cmdExample,
 		Run: func(cmd *cobra.Command, args []string) {
-			if options.version {
+			if options.help {
+				cmd.Help()
+			} else if options.version {
 				fmt.Printf("version: %s\n", version)
 			} else if len(options.completion) != 0 {
 				if err := options.Complete(cmd, args); err != nil {
@@ -125,9 +147,12 @@ func New() *cobra.Command {
 	cmd.Flags().Int32Var(&options.cnsPodTimeout, "cnsenter-to", cnsPodDefaultTimeout, "Set cnsenter pod's creation timeout")
 	cmd.Flags().BoolVar(&options.cnsPodGC, "cnsenter-gc", false, "Run cnsenter pod garbage collector")
 
-	cmd.Flags().StringVar(&options.kubeconfig, "kubeconfig", filepath.Join(homedir.HomeDir(), ".kube", "config"), "Absolute path to the kubeconfig file")
-	cmd.Flags().StringVar(&options.completion, "completion", "", "Output shell completion code for the specified shell (bash or zsh)")
+	cmd.Flags().BoolVarP(&options.help, "help", "h", false, flagHelp)
 	cmd.Flags().BoolVarP(&options.version, "version", "v", false, "Show version")
+	cmd.Flags().StringVar(&options.kubeconfig, "kubeconfig", filepath.Join(homedir.HomeDir(), ".kube", "config"), "Absolute path to the kubeconfig file")
+	if build == buildStandAlone {
+		cmd.Flags().StringVar(&options.completion, "completion", "", "Output shell completion code for the specified shell (bash or zsh)")
+	}
 
 	// Set bash completion flags
 	for name, completion := range bashCompletionFlags {
@@ -154,9 +179,10 @@ type Options struct {
 	cnsPodTimeout   int32
 	cnsPodGC        bool
 
+	help       bool
+	version    bool
 	kubeconfig string
 	completion string
-	version    bool
 }
 
 func (o *Options) Complete(cmd *cobra.Command, args []string) error {

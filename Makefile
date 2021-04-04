@@ -3,7 +3,8 @@ all: test install image
 
 .PHONY: install
 install:
-	CGO_ENABLED=0 GO111MODULE=on go install -a -ldflags="-X 'github.com/ssup2/kpexec/pkg/cmd/kpexec.version=latest'" ./cmd/kpexec
+	CGO_ENABLED=0 GO111MODULE=on go build -a -ldflags="-X 'github.com/ssup2/kpexec/pkg/cmd/kpexec.version=latest'" -o ${GOBIN}/kpexec ./cmd/kpexec
+	CGO_ENABLED=0 GO111MODULE=on go build -a -ldflags="-X 'github.com/ssup2/kpexec/pkg/cmd/kpexec.version=latest' -X 'github.com/ssup2/kpexec/pkg/cmd/kpexec.build=kubectlPlugin'" -o ${GOBIN}/kubectl-pexec ./cmd/kpexec
 
 .PHONY: image
 image:
