@@ -1,0 +1,17 @@
+name: release-krew
+on: 
+  release: 
+    types: ["published"]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1 
+      - name: Open PR for new release of Krew Plugin
+        uses: rajatjindal/krew-plugin-release@v0.0.30
+        with:
+          plugin-name: 'pexec'
+          upstream-krew-index-owner: 'kubernetes-sigs'
+        env:
+          KREW_PLUGIN_RELEASE_TOKEN: ${{ secrets.KREW_PLUGIN_RELEASE_TOKEN }}
