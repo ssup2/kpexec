@@ -237,6 +237,7 @@ func (o *Options) GarbageCollect() error {
 		}
 
 		// Delete cnsenter pod
+		fmt.Printf("Delete cnsenter pod : %s\n", cnsPod.Name)
 		if err := clientset.CoreV1().Pods(cnsPod.Namespace).Delete(context.TODO(), cnsPod.Name, metav1.DeleteOptions{}); err != nil {
 			fmt.Printf("Failed to delete to cnsenter pod : %+v\n", err)
 		}
@@ -435,16 +436,16 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 	}
 
 	// Create a cnsenter pod
-	fmt.Printf("Create cnsenter pod\n")
+	fmt.Printf("Create cnsenter pod (%s)\n", cnsPodName)
 	_, err = clientset.CoreV1().Pods(o.cnsPodNamespace).Create(context.TODO(), cnsPod, metav1.CreateOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to create cnsetner pod : %+v", err)
+		return fmt.Errorf("failed to create cnsetner pod (%s) : %+v", cnsPodName, err)
 	}
 	defer func() {
 		// Delete cnsenter pod
-		fmt.Printf("Delete cnsenter pod\n")
+		fmt.Printf("Delete cnsenter pod (%s)\n", cnsPodName)
 		if err := clientset.CoreV1().Pods(o.cnsPodNamespace).Delete(context.TODO(), cnsPodName, metav1.DeleteOptions{}); err != nil {
-			fmt.Printf("Failed to delete to cnsenter pod : %+v\n", err)
+			fmt.Printf("Failed to delete to cnsenter pod (%s) : %+v\n", cnsPodName, err)
 		}
 	}()
 
@@ -456,9 +457,9 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 		fmt.Printf("Recived signal %s\n", sig)
 
 		// Delete cnsenter pod and exit
-		fmt.Printf("Delete cnsenter pod\n")
+		fmt.Printf("Delete cnsenter pod (%s)\n", cnsPodName)
 		if err := clientset.CoreV1().Pods(o.cnsPodNamespace).Delete(context.TODO(), cnsPodName, metav1.DeleteOptions{}); err != nil {
-			fmt.Printf("Failed to delete to cnsenter pod : %+v\n", err)
+			fmt.Printf("Failed to delete to cnsenter pod (%s): %+v\n", cnsPodName, err)
 		}
 		os.Exit(1)
 	}()
@@ -468,23 +469,38 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 	cnsPodWatch, err := clientset.CoreV1().Pods(o.cnsPodNamespace).
 		Watch(context.TODO(), metav1.ListOptions{Watch: true, FieldSelector: "metadata.name=" + cnsPodName})
 	if err != nil {
-		return fmt.Errorf("failed to wait running cnsenter pod : %+v", err)
+		return fmt.Errorf("failed to wait running cnsenter pod (%s) : %+v", cnsPodName, err)
 	}
 	// Set wait timeout
 	cnsPodTimer := time.NewTimer(time.Duration(o.cnsPodTimeout) * time.Second)
 	go func() {
 		<-cnsPodTimer.C
-		fmt.Printf("Failed to wait cnsenter pod\n")
+		fmt.Printf("Failed to wait running cnsenter pod (%s)\n", cnsPodName)
+
+		// Print cnsenter pod's events
+		podEvents, err := clientset.CoreV1().Events(o.cnsPodNamespace).List(context.TODO(), metav1.ListOptions{
+			FieldSelector: fmt.Sprintf("involvedObject.namespace=%s,involvedObject.name=%s", o.cnsPodNamespace, cnsPodName),
+		})
+		if err != nil {
+			fmt.Printf("Failed to get cnsenter pod (%s) events : %+v\n", cnsPodName, err)
+		} else {
+			fmt.Printf("Print cnsenter pod (%s) events\n", cnsPodName)
+			fmt.Printf("---\n")
+			for _, event := range podEvents.Items {
+				fmt.Printf("%s\n", event.Message)
+			}
+			fmt.Printf("---\n")
+		}
 
 		// Delete cnsenter pod and exit
-		fmt.Printf("Delete cnsenter pod\n")
+		fmt.Printf("Delete cnsenter pod (%s)\n", cnsPodName)
 		if err := clientset.CoreV1().Pods(o.cnsPodNamespace).Delete(context.TODO(), cnsPodName, metav1.DeleteOptions{}); err != nil {
-			fmt.Printf("Failed to delete to cnsenter pod : %+v\n", err)
+			fmt.Printf("Failed to delete to cnsenter pod (%s) : %+v\n", cnsPodName, err)
 		}
 		os.Exit(1)
 	}()
 	// Wait and check pod's status
-	fmt.Printf("Wait to run cnsenter pod\n")
+	fmt.Printf("Wait to run cnsenter pod (%s)\n", cnsPodName)
 	for cnsPodEvent := range cnsPodWatch.ResultChan() {
 		tPod, _ = cnsPodEvent.Object.(*corev1.Pod)
 		if tPod.Status.Phase == corev1.PodRunning || tPod.Status.Phase == corev1.PodSucceeded || tPod.Status.Phase == corev1.PodFailed {
@@ -503,7 +519,7 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 
 		// Check cnsenter pod terminated through error
 		if !strings.Contains(err.Error(), "completed pod") {
-			return fmt.Errorf("failed to attach to cnsenter pod : %+v", err)
+			return fmt.Errorf("failed to attach to cnsenter pod (%s) : %+v", cnsPodName, err)
 		}
 		// If cnsenter pod is terminated, get it's log
 	}
@@ -512,7 +528,7 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 	cnsLogReq := clientset.CoreV1().Pods(o.cnsPodNamespace).GetLogs(cnsPodName, &corev1.PodLogOptions{Follow: true})
 	cnsLog, err := cnsLogReq.Stream(context.TODO())
 	if err != nil {
-		return fmt.Errorf("failed to get cnsenter pod's log stream : %+v", err)
+		return fmt.Errorf("failed to get cnsenter pod (%s) log stream : %+v", cnsPodName, err)
 	}
 	defer cnsLog.Close()
 
@@ -523,7 +539,7 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 			break
 		}
 		if err != nil {
-			return fmt.Errorf("failed to get cnsenter pod's log : %+v", err)
+			return fmt.Errorf("failed to get cnsenter pod (%s) log : %+v", cnsPodName, err)
 		}
 	}
 
