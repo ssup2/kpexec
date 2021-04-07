@@ -23,7 +23,7 @@ Since kpexec uses kubectl internally, **kubectl** installation and **kubeconfig*
 Install via download the kpexec binary
 
 ```bash
-$ export KPEXEC_VERSION=v0.3.0
+$ export KPEXEC_VERSION=v0.3.2
 
 # Linux / amd64
 $ wget -c "https://github.com/ssup2/kpexec/releases/download/${KPEXEC_VERSION}/kpexec_${KPEXEC_VERSION}_Linux_amd64.tar.gz" -O - | tar -C /usr/local/bin/ -xz
