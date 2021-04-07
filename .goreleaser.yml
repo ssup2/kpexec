@@ -35,7 +35,7 @@ archives:
   - id: kpexec
     builds:
       - kpexec
-    name_template: "kpexec_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
+    name_template: "kpexec_v{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
     replacements:
       darwin: Darwin
       linux: Linux
@@ -43,7 +43,7 @@ archives:
   - id: kubectl-pexec
     builds:
       - kubectl-pexec
-    name_template: "kubectl_pexec_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
+    name_template: "kubectl_pexec_v{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
     replacements:
       darwin: Darwin
       linux: Linux

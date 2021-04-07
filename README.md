@@ -23,22 +23,22 @@ Since kpexec uses kubectl internally, **kubectl** installation and **kubeconfig*
 Install via download the kpexec binary
 
 ```bash
-$ export KPEXEC_VERSION=0.2.9
+$ export KPEXEC_VERSION=v0.3.0
 
 # Linux / amd64
-$ wget -c "https://github.com/ssup2/kpexec/releases/download/v${KPEXEC_VERSION}/kpexec_${KPEXEC_VERSION}_Linux_amd64.tar.gz" -O - | tar -C /usr/local/bin/ -xz
+$ wget -c "https://github.com/ssup2/kpexec/releases/download/${KPEXEC_VERSION}/kpexec_${KPEXEC_VERSION}_Linux_amd64.tar.gz" -O - | tar -C /usr/local/bin/ -xz
 
 # Linux / arm64
-$ wget -c "https://github.com/ssup2/kpexec/releases/download/v${KPEXEC_VERSION}/kpexec_${KPEXEC_VERSION}_Linux_arm64.tar.gz" -O - | tar -C /usr/local/bin/ -xz
+$ wget -c "https://github.com/ssup2/kpexec/releases/download/${KPEXEC_VERSION}/kpexec_${KPEXEC_VERSION}_Linux_arm64.tar.gz" -O - | tar -C /usr/local/bin/ -xz
 
 # macOS / amd64
-$ wget -c "https://github.com/ssup2/kpexec/releases/download/v${KPEXEC_VERSION}/kpexec_${KPEXEC_VERSION}_Darwin_amd64.tar.gz" -O - | tar -C /usr/local/bin/ -xz
+$ wget -c "https://github.com/ssup2/kpexec/releases/download/${KPEXEC_VERSION}/kpexec_${KPEXEC_VERSION}_Darwin_amd64.tar.gz" -O - | tar -C /usr/local/bin/ -xz
 
 # macOS / arm64
-$ wget -c "https://github.com/ssup2/kpexec/releases/download/v${KPEXEC_VERSION}/kpexec_${KPEXEC_VERSION}_Darwin_arm64.tar.gz" -O - | tar -C /usr/local/bin/ -xz
+$ wget -c "https://github.com/ssup2/kpexec/releases/download/${KPEXEC_VERSION}/kpexec_${KPEXEC_VERSION}_Darwin_arm64.tar.gz" -O - | tar -C /usr/local/bin/ -xz
 
 # Windows / amd64
-# Download and install from https://github.com/ssup2/kpexec/releases/download/v${KPEXEC_VERSION}/kpexec_${KPEXEC_VERSION}_Windows_amd64.tar.gz
+# Download and install from https://github.com/ssup2/kpexec/releases/download/${KPEXEC_VERSION}/kpexec_${KPEXEC_VERSION}_Windows_amd64.tar.gz
 ```
 
 ### Homebrew
