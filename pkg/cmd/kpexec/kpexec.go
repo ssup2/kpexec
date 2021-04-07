@@ -37,7 +37,7 @@ const (
 	binaryStandAlone    = "kpexec"
 	binaryKubectlPlugin = "kubectl pexec"
 
-	cnsPodDefaultTimeout = 30
+	cnsPodDefaultTimeout = 60
 	cnsPodLabelKey       = "kpexec.ssup2"
 	cnsPodLabelValue     = "cnsenter"
 
