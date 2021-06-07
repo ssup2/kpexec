@@ -11,6 +11,11 @@ image:
 	docker build --build-arg VERSION=latest -f Dockerfile-cnsenter -t ssup2/cnsenter:latest .
 	docker build --build-arg VERSION=latest -f Dockerfile-cnsenter-tools -t ssup2/cnsenter-tools:latest .
 
+# goreleaser version 0.169.0
+.PHONY: release
+release:
+	goreleaser --rm-dist
+
 .PHONY: clean
 clean:
 	rm -f kpexec
