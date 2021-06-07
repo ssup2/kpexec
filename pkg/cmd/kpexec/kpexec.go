@@ -525,7 +525,7 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 	}
 
 	// Get cnsenter pod's logs
-	cnsLogReq := clientset.CoreV1().Pods(o.cnsPodNamespace).GetLogs(cnsPodName, &corev1.PodLogOptions{Follow: true})
+	cnsLogReq := clientset.CoreV1().Pods(o.cnsPodNamespace).GetLogs(cnsPodName, &corev1.PodLogOptions{Follow: true, Container: cnsContName})
 	cnsLog, err := cnsLogReq.Stream(context.TODO())
 	if err != nil {
 		return fmt.Errorf("failed to get cnsenter pod (%s) log stream : %+v", cnsPodName, err)
