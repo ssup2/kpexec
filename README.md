@@ -16,7 +16,7 @@ kpexec now supports the following CPU architectures.
 
 ## Install 
 
-Since kpexec uses kubectl internally, **kubectl** installation and **kubeconfig** files must be properly configured before using kpexec. Whenever kpexec is executed, kpexec creates a **cnsenter (Container Namespace Enter) pod** to executes cnsenter. cnsenter is a command to exec command in the target container. The cnsenter pod must be created with **hostPID** and **Privileged** Option. Therefore, before using kpexec, you should check if the pod options mentioned are available in your kubernetes cluster. 
+Since kpexec uses kubectl internally, **kubectl** installation and **kubeconfig** files must be properly configured before using kpexec. Whenever kpexec is executed, kpexec creates a **cnsenter (Container Namespace Enter) pod** to executes cnsenter. cnsenter is a command to exec command in the target container. The cnsenter pod must be created with **hostPID** and **Privileged** Option. Therefore, before using kpexec, you should check if the pod options mentioned are available in your kubernetes cluster. In K8s Cluster provided by most public clouds, including EKS, AKS, and GKE, kpexec can be used **without additional configuration**.
 
 ### Download Binary
 
@@ -84,24 +84,30 @@ Below are examples of kpexec usage.
 ```bash
 # Get output from running 'date' command from pod mypod, using the first container by default.
 $ kpexec mypod -- date
+$ kubectl pexec mypod -- date
 
 # Get output from running 'date' command in golang-container from pod mypod and namespace mynamespace.
 $ kpexec -n mynamespace mypod -c date-container -- date
+$ kubectl pexec -n mynamespace mypod -c date-container -- date
 
 # Switch to raw terminal mode, sends stdin to 'bash' in bash-container from pod mypod 
 # and sends stdout/stderr from 'bash' back to the client.
 $ kpexec -it mypod -c bash-container -- bash
+$ kubectl pexec -it mypod -c bash-container -- bash
 
 # Enable tools mode.
 $ kpexec -it -T mypod -c golang-container -- bash
+$ kubectl pexec -it -T mypod -c golang-container -- bash
 
 # Set cnsenter pod's image
 $ kpexec -it -T --cnsenter-image=ssup2/my-cnsenter-tools:latest mypod -c golang-container -- bash
+$ kubectl pexec -it -T --cnsenter-image=ssup2/my-cnsenter-tools:latest mypod -c golang-container -- bash
 
 # kpexec removes the cnsetner pod it created after executing the command. 
 # If cnsenter pods remain due to external factors, you can remove all remaining cnsenter pods 
 # by executing cnsenter garbage collector.
 $ kpexec --cnsenter-gc
+$ kubectl pexec --cnsenter-gc
 ```
 
 ## How it works
