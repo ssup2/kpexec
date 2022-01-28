@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -18,11 +17,12 @@ import (
 	"github.com/spf13/cobra"
 
 	corev1 "k8s.io/api/core/v1"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
 )
 
 // Init package
@@ -149,7 +149,7 @@ func New() *cobra.Command {
 
 	cmd.Flags().BoolVarP(&options.help, "help", "h", false, flagHelp)
 	cmd.Flags().BoolVarP(&options.version, "version", "v", false, "Show version")
-	cmd.Flags().StringVar(&options.kubeconfig, "kubeconfig", filepath.Join(homedir.HomeDir(), ".kube", "config"), "Absolute path to the kubeconfig file")
+	cmd.Flags().StringVar(&options.kubeconfig, "kubeconfig", "", "Absolute path to the kubeconfig file")
 	if build == buildStandAlone {
 		cmd.Flags().StringVar(&options.completion, "completion", "", "Output shell completion code for the specified shell (bash or zsh)")
 	}
@@ -212,12 +212,8 @@ func (o *Options) Complete(cmd *cobra.Command, args []string) error {
 }
 
 func (o *Options) GarbageCollect() error {
-	// Init k8s client
-	config, err := clientcmd.BuildConfigFromFlags("", o.kubeconfig)
-	if err != nil {
-		return fmt.Errorf("failed to set kubeconfig : %+v", err)
-	}
-	clientset, err := kubernetes.NewForConfig(config)
+	// Init k8s client set
+	clientset, err := newClientset(o.kubeconfig)
 	if err != nil {
 		return fmt.Errorf("failed to set clientset : %+v", err)
 	}
@@ -263,27 +259,18 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 	tPodName := args[argsLenAtDash-1]
 	tPodCmd := args[argsLenAtDash:]
 
-	// Init k8s client
-	config, err := clientcmd.BuildConfigFromFlags("", o.kubeconfig)
-	if err != nil {
-		return fmt.Errorf("failed to set kubeconfig : %+v", err)
-	}
-	clientset, err := kubernetes.NewForConfig(config)
+	// Init k8s clientset
+	clientset, err := newClientset(o.kubeconfig)
 	if err != nil {
 		return fmt.Errorf("failed to set clientset : %+v", err)
 	}
 
-	// If not set target pod's names, Get default namespace from kubeconfig
+	// Get namespace
+	// If not set target pod's namespace, Get default namespace from kubeconfig
 	if o.tPodNs == "" {
-		cmdConfig, err := clientcmd.NewDefaultClientConfigLoadingRules().Load()
+		o.tPodNs, err = getNamespaceByKubeconfig(o.kubeconfig)
 		if err != nil {
-			return fmt.Errorf("failed to get default namespace : %+v", err)
-		}
-		ns := cmdConfig.Contexts[cmdConfig.CurrentContext].Namespace
-		if ns == "" {
-			o.tPodNs = "default"
-		} else {
-			o.tPodNs = ns
+			return fmt.Errorf("failed to set clientset : %+v", err)
 		}
 	}
 
@@ -547,6 +534,68 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 }
 
 // Helpers
+func newClientset(kubeconfigPath string) (*kubernetes.Clientset, error) {
+	var clientsetConfig *rest.Config
+	var err error
+
+	if kubeconfigPath == "" {
+		// Get clientset config from env or default path (~/kube/.config)
+		clientCmdAPIConfig, err := clientcmd.NewDefaultClientConfigLoadingRules().Load()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get clientset config from env or default path : %+v", err)
+		}
+		clientsetConfig, err = clientcmd.NewDefaultClientConfig(*clientCmdAPIConfig, &clientcmd.ConfigOverrides{}).ClientConfig()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get clientset config from env or default path : %+v", err)
+		}
+
+	} else {
+		// Get clientset config from kubeconfigPath
+		clientsetConfig, err = clientcmd.BuildConfigFromFlags("", kubeconfigPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get config from kubeconfigPath : %+v", err)
+		}
+	}
+
+	// Get clientset from clientset config
+	clientset, err := kubernetes.NewForConfig(clientsetConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get clientset : %+v", err)
+	}
+	return clientset, nil
+}
+
+func getNamespaceByKubeconfig(kubeconfigPath string) (string, error) {
+	var namespace string
+
+	if kubeconfigPath == "" {
+		// Get namespace from env or default path (~/kube/.config)
+		config, err := clientcmd.NewDefaultClientConfigLoadingRules().Load()
+		if err != nil {
+			return "", fmt.Errorf("failed to get namespace from env or default path : %+v", err)
+		}
+
+		namespace = config.Contexts[config.CurrentContext].Namespace
+	} else {
+		// Get namespace config from kubeconfigPath
+		config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+			&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfigPath},
+			&clientcmd.ConfigOverrides{},
+		).RawConfig()
+		if err != nil {
+			return "", fmt.Errorf("failed to get namespace from kubeconfigPath")
+		}
+
+		namespace = config.Contexts[config.CurrentContext].Namespace
+	}
+
+	// If namespace is empty string, set default namespace
+	if namespace == "" {
+		namespace = "default"
+	}
+	return namespace, nil
+}
+
 func getContainerRuntimeID(pod *corev1.Pod, containerName string) (string, string, error) {
 	for _, status := range pod.Status.ContainerStatuses {
 		if status.Name == containerName {
@@ -583,6 +632,7 @@ func attachPod(kubeconfig, podNs, podName, contName string, tty, stdin bool) err
 
 	// Run kubectl attach
 	cmd := exec.Command("kubectl", args...)
+	cmd.Env = os.Environ()
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
