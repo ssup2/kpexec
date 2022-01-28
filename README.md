@@ -2,7 +2,7 @@
 
 ![kpexec Demo](image/kpexec_Demo.gif)
 
-**kpexec** is a kubernetes cli that runs commands in a container with high privileges. It runs a highly privileged container on the same node as the target container and joins into the namespaces of the target container (IPC, UTS, PID, net, mount). This is useful for debugging where you often need to execute commands with high privileges. Also, kpexec has a **tools mode**, which adds useful debugging tools into the debugged container. The tools mode is useful when there necessary debugging tools are missing in the target container.
+**kpexec** is a K8s cli that runs commands in a container with high privileges. It runs a highly privileged container on the same node as the target container and joins into the namespaces of the target container (IPC, UTS, PID, net, mount). This is useful for debugging where you often need to execute commands with high privileges. Also, kpexec has a **tools mode**, which adds useful debugging tools into the debugged container. The tools mode is useful when there necessary debugging tools are missing in the target container.
 
 In contrast, kubectl-exec runs the command with the same privileges as the container. For example, if a container does not have network privileges, the command executed by kubectl-exec also has no network privileges. This makes debugging the pod difficult. If you use kpexec instead of kubectl-exec, you can easily get high privileges for debugging.
 
@@ -14,16 +14,18 @@ kpexec now supports the following CPU architectures.
 * amd64
 * arm64
 
-## Install 
+## Check & Install
 
-Since kpexec uses kubectl internally, **kubectl** installation and **kubeconfig** files must be properly configured before using kpexec. Whenever kpexec is executed, kpexec creates a **cnsenter (Container Namespace Enter) pod** to executes cnsenter. cnsenter is a command to exec command in the target container. The cnsenter pod must be created with **hostPID** and **Privileged** Option. Therefore, before using kpexec, you should check if the pod options mentioned are available in your kubernetes cluster. In K8s Cluster provided by most public clouds, including EKS, AKS, and GKE, kpexec can be used **without additional configuration**.
+Since kpexec uses kubectl internally, **kubectl** installation and **kubeconfig** files must be properly configured before using kpexec. Whenever kpexec is executed, kpexec creates a **cnsenter (Container Namespace Enter) pod** to executes cnsenter. cnsenter is a command to exec command in the target container. The cnsenter pod must be created with **hostPID** and **Privileged** Option. Therefore, before using kpexec, you should check if the pod options mentioned are available in your K8s cluster.
+
+Fortunately, in most K8s clusters including managed K8s clusters by public cloud service such as EKS, AKS and GKE, the pod options mentioned available without configuration. Therefore, kpexec can also be used in most K8s clusters without configuration.
 
 ### Download Binary
 
 Install via download the kpexec binary
 
 ```bash
-$ export KPEXEC_VERSION=v0.3.4
+$ export KPEXEC_VERSION=v0.3.5
 
 # Linux / amd64
 $ wget -c "https://github.com/ssup2/kpexec/releases/download/${KPEXEC_VERSION}/kpexec_${KPEXEC_VERSION}_Linux_amd64.tar.gz" -O - | tar -C /usr/local/bin/ -xz
