@@ -5,25 +5,28 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/ssup2/kpexec/pkg/dwrapper"
+
+	"github.com/ssup2/kpexec/pkg/crictl"
 	"github.com/ssup2/kpexec/pkg/nsenter"
 )
 
 const (
-	OptDefaultSocketFile = "/run/containerd/containerd.sock"
-
 	OptRuntimeContainerd = "containerd"
+	OptRuntimeCrio       = "cri-o"
 	OptRuntimeDocker     = "docker"
 
 	cnsenterExample = `
-		# Run date command in all docker container's namespaces.
-		cnsenter -r docker -c [CONTAINER ID] -a date
+		# Run date command in containerd container's all namespaces.
+		cnsenter -r containerd -c [CONTAINER ID] -a date
 
-		# Run bash command in containerd container's PID namespace and network namespace with two dash
-		cnsenter -r containerd -c [CONTAINER ID] -p -n -- bash -il
+		# Run bash command in cri-o container's PID namespace and network namespace with two dash
+		cnsenter -r cri-o -c [CONTAINER ID] -p -n -- bash -il
 
-		# Run bash command with additional environments
+		# Run bash command with additional environment variables
 		cnsenter -r containerd -c [CONTAINER ID] -a key1=value1 -e key2=value2 -- bash -il
+
+		# Set CRI socket path / containerd socket path
+		cnsenter -c [CONTAINER ID] --cri [CRI SOCKET PATH / CONTAINERD SOCKET PATH] -a date
 		`
 )
 
@@ -36,10 +39,10 @@ func New() *cobra.Command {
 	options := &Options{}
 
 	cmd := &cobra.Command{
-		Use:                   "cnsenter -r [CONTAINER RUNTIME] -c [CONTAINER ID] [flags] -- COMMAND [args...]",
+		Use:                   "cnsenter -c [CONTAINER ID] [flags] -- COMMAND [args...]",
 		DisableFlagsInUseLine: true,
-		Short:                 "Execute a command in a container.",
-		Long:                  "Execute a command in a container.",
+		Short:                 "Execute a command in a container through the CRI",
+		Long:                  "Execute a command in a container through the CRI",
 		Example:               cnsenterExample,
 		Run: func(cmd *cobra.Command, args []string) {
 			if options.version {
@@ -53,9 +56,9 @@ func New() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&options.contName, "container", "c", "", "container ID to enter")
-	cmd.Flags().StringVarP(&options.contRuntime, "runtime", "r", OptRuntimeDocker, "container runtime")
-	cmd.Flags().StringVarP(&options.contdSocket, "socket", "s", OptDefaultSocketFile, "containerd unix domain socket path")
+	cmd.Flags().StringVarP(&options.contRuntime, "runtime", "r", OptRuntimeContainerd, "container runtime")
+	cmd.Flags().StringVarP(&options.contID, "container", "c", "", "container ID to enter")
+	cmd.Flags().StringVarP(&options.criSocket, "cri", "", "", "CRI socket path")
 
 	cmd.Flags().BoolVarP(&options.nsAll, "all", "a", false, "enter all container namespace")
 	cmd.Flags().BoolVarP(&options.nsMount, "mount", "m", false, "enter container mount namespace")
@@ -83,8 +86,8 @@ func New() *cobra.Command {
 // CnsenterOptions
 type Options struct {
 	contRuntime string
-	contdSocket string
-	contName    string
+	contID      string
+	criSocket   string
 
 	nsAll    bool
 	nsMount  bool
@@ -112,113 +115,107 @@ func (o *Options) Run(args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("you must specify at least one command for the container")
 	}
-	if len(o.contName) == 0 {
+	if len(o.contID) == 0 {
 		return fmt.Errorf("container name must be specified")
 	}
 
-	// Set containerd namespace
-	var namespace string
-	if o.contRuntime == OptRuntimeContainerd {
-		namespace = "k8s.io"
-	} else if o.contRuntime == OptRuntimeDocker {
-		namespace = "moby"
-	} else {
-		return fmt.Errorf("%s runtime not support", o.contRuntime)
+	// Get container infos via crictl
+	cri, err := crictl.New(o.contRuntime)
+	if err != nil {
+		return err
+	}
+	if o.criSocket != "" {
+		cri.SetSocketPath(o.criSocket)
 	}
 
-	// Get container infos
-	wrapper, err := dwrapper.New(o.contdSocket, namespace)
+	contPID, err := cri.GetInitPid(o.contID)
 	if err != nil {
 		return err
 	}
-	defer wrapper.Close()
-
-	pid, err := wrapper.GetInitPid(o.contName)
+	contRoot, err := cri.GetRootPath(o.contID)
 	if err != nil {
 		return err
 	}
-	root, err := wrapper.GetRootDir(o.contName)
+	contWorkingDir, err := cri.GetCWDPath(o.contID)
 	if err != nil {
 		return err
 	}
-	workingDir, err := wrapper.GetWorkingDir(o.contName)
-	if err != nil {
-		return err
-	}
-	envs, err := wrapper.GetEnv(o.contName)
+	contEnvs, err := cri.GetEnvs(o.contID)
 	if err != nil {
 		return err
 	}
 
-	// Set nsenter
-	builder, err := nsenter.New()
+	// Allocate nsenter
+	nse, err := nsenter.New()
 	if err != nil {
 		return err
 	}
 
-	builder.SetOptTarget(pid)
-	builder.SetProgram(args)
+	// Set PID, command
+	nse.SetOptTarget(contPID)
+	nse.SetProgram(args)
 
+	// Set namespace
 	if o.nsAll {
-		builder.SetOptAll()
+		nse.SetOptAll()
 	}
 	if o.nsMount {
-		builder.SetOptMount(nil)
+		nse.SetOptMount(nil)
 	}
 	if o.nsUTS {
-		builder.SetOptUTS(nil)
+		nse.SetOptUTS(nil)
 	}
 	if o.nsIPC {
-		builder.SetOptIPC(nil)
+		nse.SetOptIPC(nil)
 	}
 	if o.nsNet {
-		builder.SetOptNetwork(nil)
+		nse.SetOptNetwork(nil)
 	}
 	if o.nsPID {
-		builder.SetOptPID(nil)
+		nse.SetOptPID(nil)
 	}
 	if o.nsCgroup {
-		builder.SetOptCgroup(nil)
+		nse.SetOptCgroup(nil)
 	}
 	if o.nsUser {
-		builder.SetOptUser(nil)
+		nse.SetOptUser(nil)
 	}
 
 	// Set root and working directory
 	if o.rootSymbolic != "" {
-		if err := os.Symlink(root, o.rootSymbolic); err != nil {
+		if err := os.Symlink(contRoot, o.rootSymbolic); err != nil {
 			return err
 		}
 	}
 	if o.workingDir {
 		if o.workingDirBase == "" {
-			builder.SetOptWd(nil)
+			nse.SetOptWd(nil)
 		} else {
-			wd := o.workingDirBase + workingDir
-			envs = append(envs, "PWD="+wd) // For shells, set PWD env
-			builder.SetOptWd(&wd)
+			wd := o.workingDirBase + contWorkingDir
+			contEnvs = append(contEnvs, "PWD="+wd) // For shells, set PWD env
+			nse.SetOptWd(&wd)
 		}
 	}
 
 	// Set UID, GID
 	if o.uid != 0 {
-		builder.SetOptUid(o.uid)
+		nse.SetOptUid(o.uid)
 	}
 	if o.gid != 0 {
-		builder.SetOptGid(o.gid)
+		nse.SetOptGid(o.gid)
 	}
 
 	// Append envs
 	for _, env := range o.envs {
-		envs = append(envs, env) // For shells, set TERM env
+		contEnvs = append(contEnvs, env)
 	}
 
 	// Run nsenter
-	cmd := builder.GetExecCmd()
+	cmd := nse.GetExecCmd()
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
-	cmd.Env = envs
+	cmd.Env = contEnvs
 	if err := cmd.Run(); err != nil {
 		return err
 	}

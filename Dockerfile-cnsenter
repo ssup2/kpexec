@@ -1,13 +1,20 @@
+# Build cnsenter
 FROM golang:1.16 as builder
 WORKDIR /workspace
 
-# Build cnsenter
 ARG VERSION
 COPY . .
 RUN CGO_ENABLED=0 GO111MODULE=on go build -a -ldflags="-X 'github.com/ssup2/kpexec/pkg/cmd/cnsenter.version=${VERSION}'" -o cnsenter cmd/cnsenter/main.go
 
+# Download crictl
+FROM alpine:3.13.1 as downloader
+ENV CRICTL_VERSION v1.24.1
+RUN wget https://github.com/kubernetes-sigs/cri-tools/releases/download/${CRICTL_VERSION}/crictl-${CRICTL_VERSION}-linux-amd64.tar.gz
+RUN tar zxvf crictl-${CRICTL_VERSION}-linux-amd64.tar.gz -C /usr/local/bin
+
 # Build image
 FROM alpine:3.13.1
-COPY --from=builder /workspace/cnsenter /usr/bin/cnsenter
+COPY --from=builder /workspace/cnsenter /usr/local/bin/cnsenter
+COPY --from=downloader /usr/local/bin/crictl /usr/local/bin/crictl
 
 CMD ["cnsenter"]

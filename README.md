@@ -2,7 +2,7 @@
 
 ![kpexec Demo](image/kpexec_Demo.gif)
 
-**kpexec** is a K8s cli that runs commands in a container with high privileges. It runs a highly privileged container on the same node as the target container and joins into the namespaces of the target container (IPC, UTS, PID, net, mount). This is useful for debugging where you often need to execute commands with high privileges. Also, kpexec has a **tools mode**, which adds useful debugging tools into the debugged container. The tools mode is useful when there necessary debugging tools are missing in the target container.
+**kpexec** is a K8s cli that runs commands in a container with high privileges **without SSH**. It runs a highly privileged container on the same node as the target container and joins into the namespaces of the target container (IPC, UTS, PID, net, mount). This is useful for debugging where you often need to execute commands with high privileges. Also, kpexec has a **tools mode**, which adds useful debugging tools into the debugged container. The tools mode is useful when there necessary debugging tools are missing in the target container.
 
 In contrast, kubectl-exec runs the command with the same privileges as the container. For example, if a container does not have network privileges, the command executed by kubectl-exec also has no network privileges. This makes debugging the pod difficult. If you use kpexec instead of kubectl-exec, you can easily get high privileges for debugging.
 
@@ -16,9 +16,9 @@ kpexec now supports the following CPU architectures.
 
 ## Check & Install
 
-Since kpexec uses kubectl internally, **kubectl** installation and **kubeconfig** files must be properly configured before using kpexec. Whenever kpexec is executed, kpexec creates a **cnsenter (Container Namespace Enter) pod** to executes cnsenter. cnsenter is a command to exec command in the target container. The cnsenter pod must be created with **hostPID** and **Privileged** Option. Therefore, before using kpexec, you should check if the pod options mentioned are available in your K8s cluster.
+Since kpexec uses kubectl internally, **kubectl** installation and **kubeconfig** files must be properly configured before using kpexec. Whenever kpexec is executed, kpexec creates a **cnsenter (Container Namespace Enter) pod** to executes cnsenter. cnsenter is a command to exec command in the target container through **CRI (Container Runtime Interface)**. 
 
-Fortunately, in most K8s clusters including managed K8s clusters by public cloud service such as EKS, AKS and GKE, the pod options mentioned available without configuration. Therefore, kpexec can also be used in most K8s clusters without configuration.
+The cnsenter pod must be created with **hostPID** and **Privileged** Option. Therefore, before using kpexec, you should check if the pod options mentioned are available in your K8s cluster. Fortunately, in most K8s clusters including managed K8s clusters by public cloud service such as EKS, AKS and GKE, the pod options mentioned available without configuration. Therefore, kpexec can also be used in most K8s clusters without any configuration.
 
 ### Download Binary
 
@@ -98,12 +98,16 @@ $ kpexec -it mypod -c bash-container -- bash
 $ kubectl pexec -it mypod -c bash-container -- bash
 
 # Enable tools mode.
-$ kpexec -it -T mypod -c golang-container -- bash
-$ kubectl pexec -it -T mypod -c golang-container -- bash
+$ kpexec -it -T mypod -c bash-container -- bash
+$ kubectl pexec -it -T mypod -c bash-container -- bash
 
 # Set cnsenter pod's image
-$ kpexec -it -T --cnsenter-image=ssup2/my-cnsenter-tools:latest mypod -c golang-container -- bash
-$ kubectl pexec -it -T --cnsenter-image=ssup2/my-cnsenter-tools:latest mypod -c golang-container -- bash
+$ kpexec -it -T --cnsenter-image=ssup2/my-cnsenter-tools:latest mypod -c bash-container -- bash
+$ kubectl pexec -it -T --cnsenter-image=ssup2/my-cnsenter-tools:latest mypod -c bash-container -- bash
+
+# Set CRI socket path / containerd socket path
+$ kpexec -it -T --cri /run/my/containerd.sock -c bash-container -- bash
+$ kubectl pexec -it -T --cri /run/my/containerd.sock -c bash-container -- bash
 
 # kpexec removes the cnsetner pod it created after executing the command. 
 # If cnsenter pods remain due to external factors, you can remove all remaining cnsenter pods 
@@ -116,7 +120,7 @@ $ kubectl pexec --cnsenter-gc
 
 ![kpexec Operation](image/kpexec_Operation.png)
 
-The figure above shows the operation processs of kpexec. At first, kpexec obtains the information of target pod from K8s API Server and finds out which Node the target pod exists in. After that, kpexec creates a cnsenter pod in the node where target pod exists and executes cnsetner. cnsenter gets the target container's pid and root directory information from containerd. Then cnsetner executes the command in the target container based on the obtained information.
+The figure above shows the operation processs of kpexec. At first, kpexec obtains the information of target pod from K8s API Server and finds out which Node the target pod exists in. After that, kpexec creates a cnsenter pod in the node where target pod exists and executes cnsetner. cnsenter gets the target container's pid and root directory information from container runtime through CRI (Container Runtime Interface). Then cnsetner executes the command in the target container based on the obtained information.
 
 cnsenter pod uses the below images defaultly. The cnsenter pod image can be set with the '--cnsetner-image' option.
 * default mode - ssup2/cnsenter:[kpexec version]
