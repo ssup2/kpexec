@@ -5,140 +5,140 @@ import (
 	"os/exec"
 )
 
-type Builder struct {
+type Nsenter struct {
 	opts []string
 	cmds []string
 }
 
-func New() (*Builder, error) {
-	return &Builder{}, nil
+func New() (*Nsenter, error) {
+	return &Nsenter{}, nil
 }
 
-func (b *Builder) GetExecCmd() *exec.Cmd {
-	args := b.opts
+func (n *Nsenter) GetExecCmd() *exec.Cmd {
+	args := n.opts
 	args = append(args, "--")
-	args = append(args, b.cmds...)
+	args = append(args, n.cmds...)
 
 	return exec.Command("nsenter", args...)
 }
 
-func (b *Builder) SetProgram(c []string) *Builder {
-	b.cmds = c
-	return b
+func (n *Nsenter) SetProgram(c []string) *Nsenter {
+	n.cmds = c
+	return n
 }
 
-func (b *Builder) SetOptAll() *Builder {
-	b.opts = append(b.opts, "--all")
-	return b
+func (n *Nsenter) SetOptAll() *Nsenter {
+	n.opts = append(n.opts, "--all")
+	return n
 }
 
-func (b *Builder) SetOptTarget(pid uint32) *Builder {
-	b.opts = append(b.opts, "--target="+fmt.Sprint(pid))
-	return b
+func (n *Nsenter) SetOptTarget(pid uint64) *Nsenter {
+	n.opts = append(n.opts, "--target="+fmt.Sprint(pid))
+	return n
 }
 
-func (b *Builder) SetOptMount(file *string) *Builder {
+func (n *Nsenter) SetOptMount(file *string) *Nsenter {
 	if file == nil {
-		b.opts = append(b.opts, "--mount")
+		n.opts = append(n.opts, "--mount")
 	} else {
-		b.opts = append(b.opts, "--mount="+*file)
+		n.opts = append(n.opts, "--mount="+*file)
 	}
-	return b
+	return n
 }
 
-func (b *Builder) SetOptUTS(file *string) *Builder {
+func (n *Nsenter) SetOptUTS(file *string) *Nsenter {
 	if file == nil {
-		b.opts = append(b.opts, "--uts")
+		n.opts = append(n.opts, "--uts")
 	} else {
-		b.opts = append(b.opts, "--uts="+*file)
+		n.opts = append(n.opts, "--uts="+*file)
 	}
-	return b
+	return n
 }
 
-func (b *Builder) SetOptIPC(file *string) *Builder {
+func (n *Nsenter) SetOptIPC(file *string) *Nsenter {
 	if file == nil {
-		b.opts = append(b.opts, "--ipc")
+		n.opts = append(n.opts, "--ipc")
 	} else {
-		b.opts = append(b.opts, "--ipc="+*file)
+		n.opts = append(n.opts, "--ipc="+*file)
 	}
-	return b
+	return n
 }
 
-func (b *Builder) SetOptNetwork(file *string) *Builder {
+func (n *Nsenter) SetOptNetwork(file *string) *Nsenter {
 	if file == nil {
-		b.opts = append(b.opts, "--net")
+		n.opts = append(n.opts, "--net")
 	} else {
-		b.opts = append(b.opts, "--net="+*file)
+		n.opts = append(n.opts, "--net="+*file)
 	}
-	return b
+	return n
 }
 
-func (b *Builder) SetOptPID(file *string) *Builder {
+func (n *Nsenter) SetOptPID(file *string) *Nsenter {
 	if file == nil {
-		b.opts = append(b.opts, "--pid")
+		n.opts = append(n.opts, "--pid")
 	} else {
-		b.opts = append(b.opts, "--pid="+*file)
+		n.opts = append(n.opts, "--pid="+*file)
 	}
-	return b
+	return n
 }
 
-func (b *Builder) SetOptCgroup(file *string) *Builder {
+func (n *Nsenter) SetOptCgroup(file *string) *Nsenter {
 	if file == nil {
-		b.opts = append(b.opts, "--cgroup")
+		n.opts = append(n.opts, "--cgroup")
 	} else {
-		b.opts = append(b.opts, "--cgroup="+*file)
+		n.opts = append(n.opts, "--cgroup="+*file)
 	}
-	return b
+	return n
 }
 
-func (b *Builder) SetOptUser(file *string) *Builder {
+func (n *Nsenter) SetOptUser(file *string) *Nsenter {
 	if file == nil {
-		b.opts = append(b.opts, "--user")
+		n.opts = append(n.opts, "--user")
 	} else {
-		b.opts = append(b.opts, "--user="+*file)
+		n.opts = append(n.opts, "--user="+*file)
 	}
-	return b
+	return n
 }
 
-func (b *Builder) SetOptUid(uid int) *Builder {
-	b.opts = append(b.opts, "--setuid="+fmt.Sprint(uid))
-	return b
+func (n *Nsenter) SetOptUid(uid int) *Nsenter {
+	n.opts = append(n.opts, "--setuid="+fmt.Sprint(uid))
+	return n
 }
 
-func (b *Builder) SetOptGid(gid int) *Builder {
-	b.opts = append(b.opts, "--setgid="+fmt.Sprint(gid))
-	return b
+func (n *Nsenter) SetOptGid(gid int) *Nsenter {
+	n.opts = append(n.opts, "--setgid="+fmt.Sprint(gid))
+	return n
 }
 
-func (b *Builder) SetOptPreserveCredentials() *Builder {
-	b.opts = append(b.opts, "--preserve-credentials")
-	return b
+func (n *Nsenter) SetOptPreserveCredentials() *Nsenter {
+	n.opts = append(n.opts, "--preserve-credentials")
+	return n
 }
 
-func (b *Builder) SetOptRoot(path *string) *Builder {
+func (n *Nsenter) SetOptRoot(path *string) *Nsenter {
 	if path == nil {
-		b.opts = append(b.opts, "--root")
+		n.opts = append(n.opts, "--root")
 	} else {
-		b.opts = append(b.opts, "--root="+*path)
+		n.opts = append(n.opts, "--root="+*path)
 	}
-	return b
+	return n
 }
 
-func (b *Builder) SetOptWd(path *string) *Builder {
+func (n *Nsenter) SetOptWd(path *string) *Nsenter {
 	if path == nil {
-		b.opts = append(b.opts, "--wd")
+		n.opts = append(n.opts, "--wd")
 	} else {
-		b.opts = append(b.opts, "--wd="+*path)
+		n.opts = append(n.opts, "--wd="+*path)
 	}
-	return b
+	return n
 }
 
-func (b *Builder) SetOptNoFork() *Builder {
-	b.opts = append(b.opts, "--no-fork")
-	return b
+func (n *Nsenter) SetOptNoFork() *Nsenter {
+	n.opts = append(n.opts, "--no-fork")
+	return n
 }
 
-func (b *Builder) SetOptFollowContext() *Builder {
-	b.opts = append(b.opts, "--follow-context")
-	return b
+func (n *Nsenter) SetOptFollowContext() *Nsenter {
+	n.opts = append(n.opts, "--follow-context")
+	return n
 }

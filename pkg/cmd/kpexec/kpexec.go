@@ -15,9 +15,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-
 	corev1 "k8s.io/api/core/v1"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -47,14 +45,19 @@ const (
 	cnsContDefaultToolsRoot = "/croot"
 	cnsContProcRemountExec  = "remount-proc-exec"
 
+	criSocketVolumeRun = "cri-socket-run"
+	criSocketPathRun   = "/run"
+	criSocketVolumeVar = "cri-socket-var"
+	criSocketPathVar   = "/var/run"
+
 	contRuntimeContD  = "containerd"
 	contRuntimeDocker = "docker"
-
-	contDSocketVolume = "containerd-socket"
-	contDSocketPath   = "/run/containerd/containerd.sock"
+	contRuntimeCrio   = "cri-o"
 
 	contRootContdVolume  = "container-containerd-root"
 	contRootContdPath    = "/run/containerd"
+	contRootCrioVolume   = "container-crio-root"
+	contRootCrioPath     = "/var/lib/containers"
 	contRootDockerVolume = "container-docker-root"
 	contRootDockerPath   = "/var/lib/docker"
 
@@ -69,13 +72,16 @@ const (
 
 		# Switch to raw terminal mode, sends stdin to 'bash' in bash-container from pod mypod
 		# and sends stdout/stderr from 'bash' back to the client
-		{{.binary}} -it mypod -c bash-container -- bash 
+		{{.binary}} -it mypod -c bash-container -- bash
 
 		# Enable 'tools' mode
-		{{.binary}} -it -T mypod -c bash-container -- bash 
+		{{.binary}} -it -T mypod -c bash-container -- bash
 
 		# Set cnsenter pod's image
-		{{.binary}} -it -T --cnsenter-img=ssup2/my-cnsenter-tools:latest mypod -c golang-container -- bash
+		{{.binary}} -it -T --cnsenter-img=ssup2/my-cnsenter-tools:latest mypod -c bash-container -- bash
+
+		# Set CRI socket path / containerd socket path
+		{{.binary}} -it -T --cri [CRI SOCKET PATH / CONTAINERD SOCKET PATH] -c bash-container --bash
 
 		# Run cnsenter pod garbage collector
 		{{.binary}} --cnsenter-gc
@@ -147,9 +153,11 @@ func New() *cobra.Command {
 	cmd.Flags().Int32Var(&options.cnsPodTimeout, "cnsenter-to", cnsPodDefaultTimeout, "Set cnsenter pod's creation timeout")
 	cmd.Flags().BoolVar(&options.cnsPodGC, "cnsenter-gc", false, "Run cnsenter pod garbage collector")
 
+	cmd.Flags().StringVar(&options.kubeconfig, "kubeconfig", "", "Absolute path to the kubeconfig file")
+	cmd.Flags().StringVar(&options.criSocket, "cri", "", "CRI socket path")
+
 	cmd.Flags().BoolVarP(&options.help, "help", "h", false, flagHelp)
 	cmd.Flags().BoolVarP(&options.version, "version", "v", false, "Show version")
-	cmd.Flags().StringVar(&options.kubeconfig, "kubeconfig", "", "Absolute path to the kubeconfig file")
 	if build == buildStandAlone {
 		cmd.Flags().StringVar(&options.completion, "completion", "", "Output shell completion code for the specified shell (bash or zsh)")
 	}
@@ -166,7 +174,7 @@ func New() *cobra.Command {
 	return cmd
 }
 
-// PexecOptions
+// kpexecOptions
 type Options struct {
 	tPodNs    string
 	tContName string
@@ -179,9 +187,11 @@ type Options struct {
 	cnsPodTimeout   int32
 	cnsPodGC        bool
 
+	kubeconfig string
+	criSocket  string
+
 	help       bool
 	version    bool
-	kubeconfig string
 	completion string
 }
 
@@ -295,7 +305,7 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 	// Create and set defer to delete cnsenter pod
 	// Config cnsenter pod
 	cnsPodName := fmt.Sprintf("cnsenter-%s", getRandomString(10))
-	cnsDSocketVolumeType := corev1.HostPathSocket
+	cnsCRISocketVolumeType := corev1.HostPathDirectory
 	cnsContRootVolumeType := corev1.HostPathDirectory
 	cnsPrivileged := true
 
@@ -315,8 +325,12 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 					TTY:   o.tty,
 					VolumeMounts: []corev1.VolumeMount{
 						{
-							Name:      contDSocketVolume,
-							MountPath: contDSocketPath,
+							Name:      criSocketVolumeRun,
+							MountPath: criSocketPathRun,
+						},
+						{
+							Name:      criSocketVolumeVar,
+							MountPath: criSocketPathVar,
 						},
 					},
 					SecurityContext: &corev1.SecurityContext{
@@ -326,11 +340,20 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 			},
 			Volumes: []corev1.Volume{
 				{
-					Name: contDSocketVolume,
+					Name: criSocketVolumeRun,
 					VolumeSource: corev1.VolumeSource{
 						HostPath: &corev1.HostPathVolumeSource{
-							Path: contDSocketPath,
-							Type: &cnsDSocketVolumeType,
+							Type: &cnsCRISocketVolumeType,
+							Path: criSocketPathRun,
+						},
+					},
+				},
+				{
+					Name: criSocketVolumeVar,
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Type: &cnsCRISocketVolumeType,
+							Path: criSocketPathVar,
 						},
 					},
 				},
@@ -353,14 +376,17 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 		// Set command
 		// Do not enter mount namespace
 		// Create new mount namespace and remount procfs
-		cnsPodCmd := []string{"cnsenter", "--pid", "--net", "--ipc", "--uts",
-			"--runtime=" + tContRuntime, "--container=" + tContID,
-			"--root-symlink", cnsContDefaultToolsRoot, "--wd", "--wd-base", cnsContDefaultToolsRoot,
-			"--env", "TERM=xterm", "--", "unshare", "--mount", cnsContProcRemountExec}
+		cnsPodCmd := []string{"cnsenter", "--runtime", tContRuntime, "--container", tContID,
+			"--pid", "--net", "--ipc", "--uts", "--root-symlink", cnsContDefaultToolsRoot,
+			"--wd", "--wd-base", cnsContDefaultToolsRoot, "--env", "TERM=xterm"}
+		if o.criSocket != "" {
+			cnsPodCmd = append(cnsPodCmd, "--cri", o.criSocket)
+		}
+		cnsPodCmd = append(cnsPodCmd, "--", "unshare", "--mount", cnsContProcRemountExec)
 		cnsPodCmd = append(cnsPodCmd, tPodCmd...)
 		cnsPod.Spec.Containers[0].Command = cnsPodCmd
 
-		// Copy DNS settings from target pods
+		// Copy DNS settings from target pod
 		cnsPod.Spec.DNSPolicy = tPod.Spec.DeepCopy().DNSPolicy
 		cnsPod.Spec.DNSConfig = tPod.Spec.DeepCopy().DNSConfig
 
@@ -371,8 +397,8 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 					Name: contRootContdVolume,
 					VolumeSource: corev1.VolumeSource{
 						HostPath: &corev1.HostPathVolumeSource{
-							Path: contRootContdPath,
 							Type: &cnsContRootVolumeType,
+							Path: contRootContdPath,
 						},
 					},
 				})
@@ -382,14 +408,31 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 					Name:      contRootContdVolume,
 					MountPath: contRootContdPath,
 				})
+		} else if tContRuntime == contRuntimeCrio {
+			cnsPod.Spec.Volumes = append(cnsPod.Spec.Volumes,
+				corev1.Volume{
+					Name: contRootCrioVolume,
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Type: &cnsContRootVolumeType,
+							Path: contRootCrioPath,
+						},
+					},
+				})
+
+			cnsPod.Spec.Containers[0].VolumeMounts = append(cnsPod.Spec.Containers[0].VolumeMounts,
+				corev1.VolumeMount{
+					Name:      contRootCrioVolume,
+					MountPath: contRootCrioPath,
+				})
 		} else if tContRuntime == contRuntimeDocker {
 			cnsPod.Spec.Volumes = append(cnsPod.Spec.Volumes,
 				corev1.Volume{
 					Name: contRootDockerVolume,
 					VolumeSource: corev1.VolumeSource{
 						HostPath: &corev1.HostPathVolumeSource{
-							Path: contRootDockerPath,
 							Type: &cnsContRootVolumeType,
+							Path: contRootDockerPath,
 						},
 					},
 				})
@@ -408,8 +451,12 @@ func (o *Options) Run(args []string, argsLenAtDash int) error {
 		cnsPod.Spec.Containers[0].Image = fmt.Sprintf("%s:%s", cnsContDefaultImg, strings.TrimPrefix(version, "v"))
 
 		// Set command
-		cnsPodCmd := []string{"cnsenter", "--mount", "--pid", "--net", "--ipc", "--uts",
-			"--runtime=" + tContRuntime, "--container=" + tContID, "--wd", "--"}
+		cnsPodCmd := []string{"cnsenter", "--runtime", tContRuntime, "--container", tContID,
+			"--mount", "--pid", "--net", "--ipc", "--uts", "--wd"}
+		if o.criSocket != "" {
+			cnsPodCmd = append(cnsPodCmd, "--cri", o.criSocket)
+		}
+		cnsPodCmd = append(cnsPodCmd, "--")
 		cnsPodCmd = append(cnsPodCmd, tPodCmd...)
 		cnsPod.Spec.Containers[0].Command = cnsPodCmd
 	}
