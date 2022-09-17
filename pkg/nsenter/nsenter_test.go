@@ -6,12 +6,12 @@ import (
 )
 
 func TestNsenterBuilder(t *testing.T) {
-	// Set builder
-	builder := Builder{}
-	builder.SetProgram([]string{"echo", "test"})
+	// Set nsenter
+	nse, _ := New()
+	nse.SetProgram([]string{"echo", "test"})
 
 	// Get nsenter command, Set stdout/stderr
-	cmd := builder.GetExecCmd()
+	cmd := nse.GetExecCmd()
 	var outb, errb bytes.Buffer
 	cmd.Stdout = &outb
 	cmd.Stderr = &errb
