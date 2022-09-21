@@ -8,6 +8,7 @@ In contrast, kubectl-exec runs the command with the same privileges as the conta
 
 kpexec now supports the following container runtimes.
 * containerd
+* CRI-O
 * Docker
 
 kpexec now supports the following CPU architectures.
@@ -25,7 +26,7 @@ The cnsenter pod must be created with **hostPID** and **Privileged** Option. The
 Install via download the kpexec binary
 
 ```bash
-$ export KPEXEC_VERSION=v0.3.5
+$ export KPEXEC_VERSION=v0.4.0
 
 # Linux / amd64
 $ wget -c "https://github.com/ssup2/kpexec/releases/download/${KPEXEC_VERSION}/kpexec_${KPEXEC_VERSION}_Linux_amd64.tar.gz" -O - | tar -C /usr/local/bin/ -xz
