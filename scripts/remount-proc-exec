@@ -7,4 +7,4 @@ umount /proc
 mount -t proc proc /proc
 
 # Exec command
-exec $@
+exec "$@"
