@@ -35,19 +35,11 @@ archives:
   - id: kpexec
     builds:
       - kpexec
-    name_template: "kpexec_v{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
-    replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
+    name_template: "kpexec_v{{ .Version }}_{{ title .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
   - id: kubectl-pexec
     builds:
       - kubectl-pexec
-    name_template: "kubectl_pexec_v{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
-    replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
+    name_template: "kubectl_pexec_v{{ .Version }}_{{ title .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
 checksum:
   name_template: checksums.txt
 changelog:
@@ -56,6 +48,6 @@ brews:
   - name: kpexec
     ids:
       - kpexec
-    tap:
+    repository:
       owner: ssup2
       name: homebrew-tap
