@@ -1,25 +1,36 @@
+# syntax=docker/dockerfile:latest
 # Build cnsenter
-FROM golang:1.16 as builder
+FROM --platform=${TARGETPLATFORM} golang:1.20.8 as builder
+
+ARG TARGETPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
 ARG VERSION
+
 WORKDIR /workspace
+
 COPY . .
+
 RUN CGO_ENABLED=0 GO111MODULE=on go build -a -ldflags="-X 'github.com/ssup2/kpexec/pkg/cmd/cnsenter.version=${VERSION}'" -o cnsenter cmd/cnsenter/main.go
 
 # Download crictl
-FROM alpine:3.13.1 as downloader
+FROM alpine:3 as downloader
+
 ARG TARGETPLATFORM
+
 ENV CRICTL_VERSION v1.24.1
-RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then ARCHITECTURE=arm; else ARCHITECTURE=amd64; fi \
-    && wget https://github.com/kubernetes-sigs/cri-tools/releases/download/${CRICTL_VERSION}/crictl-${CRICTL_VERSION}-linux-${ARCHITECTURE}.tar.gz
-RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then ARCHITECTURE=arm; else ARCHITECTURE=amd64; fi \
-    && tar zxvf crictl-${CRICTL_VERSION}-linux-${ARCHITECTURE}.tar.gz -C /usr/local/bin
+
+RUN [ "$TARGETPLATFORM" == "linux/arm64" ] && export ARCHITECTURE=arm || export ARCHITECTURE=amd64
+
+RUN curl -LsSf "https://github.com/kubernetes-sigs/cri-tools/releases/download/${CRICTL_VERSION}/crictl-${CRICTL_VERSION}-linux-${ARCHITECTURE}.tar.gz" | tar xzvf - -C /usr/local/bin
 
 # Build image
-# Reference - https://github.com/nicolaka/netshoot
-FROM alpine:3.13.1
-COPY --from=builder /workspace/cnsenter /usr/local/bin/cnsenter
-COPY --from=downloader /usr/local/bin/crictl /usr/local/bin/crictl
-COPY scripts/remount-proc-exec /usr/bin/remount-proc-exec
+FROM --platform=${TARGETPLATFORM} alpine:3
+
+COPY --from=builder --chmod=755 --chown=root /workspace/cnsenter /usr/local/bin/cnsenter
+COPY --from=downloader --chmod=755 --chown=root /usr/local/bin/crictl /usr/local/bin/crictl
+COPY --chmod=755 --chown=root scripts/remount-proc-exec /usr/bin/remount-proc-exec
+
 RUN apk add \
 	apache2-utils \
 	bash \
@@ -49,6 +60,8 @@ RUN apk add \
 	tcpdump \
 	tcptraceroute \
 	tshark \
-	vim \ 
-	wrk 
+	vim \
+	wrk
+
 CMD ["cnsenter"]
+HEALTHCHECK NONE
