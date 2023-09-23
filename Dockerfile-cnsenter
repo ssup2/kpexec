@@ -22,9 +22,8 @@ ARG TARGETARCH
 
 ENV CRICTL_VERSION=v1.28.0
 
-RUN [ "$TARGETPLATFORM" == "linux/arm64" ] && export ARCHITECTURE=arm || export ARCHITECTURE=amd64
-
-RUN curl -LsSf "https://github.com/kubernetes-sigs/cri-tools/releases/download/${CRICTL_VERSION}/crictl-${CRICTL_VERSION}-linux-${ARCHITECTURE}.tar.gz" | tar xzvf - -C /usr/local/bin
+RUN [ "$TARGETPLATFORM" == "linux/arm64" ] && ARCHITECTURE=arm || ARCHITECTURE=amd64; \
+  wget -O- "https://github.com/kubernetes-sigs/cri-tools/releases/download/${CRICTL_VERSION}/crictl-${CRICTL_VERSION}-linux-${ARCHITECTURE}.tar.gz" | tar xzvf - -C /usr/local/bin
 
 # Build image
 FROM --platform=${TARGETPLATFORM} alpine:3
