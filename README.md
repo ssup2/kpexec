@@ -17,7 +17,7 @@ kpexec now supports the following CPU architectures.
 
 ## Check & Install
 
-Since kpexec uses kubectl internally, **kubectl** installation and **kubeconfig** files must be properly configured before using kpexec. Whenever kpexec is executed, kpexec creates a **cnsenter (Container Namespace Enter) pod** to executes cnsenter. cnsenter is a command to exec command in the target container through **CRI (Container Runtime Interface)**. 
+Since kpexec uses kubectl internally, **kubectl** installation and **kubeconfig** files must be properly configured before using kpexec. Whenever kpexec is executed, kpexec creates a **cnsenter (Container Namespace Enter) pod** to executes cnsenter. cnsenter is a command to exec command in the target container through **CRI (Container Runtime Interface)**.
 
 The cnsenter pod must be created with **hostPID**, **Privileged** and **hostPath** Option. Therefore, before using kpexec, you should check if the pod options mentioned are available in your K8s cluster. Fortunately, in most K8s clusters including managed K8s clusters by public cloud service such as EKS, AKS and GKE, the pod options mentioned available without configuration. Therefore, kpexec can also be used in most K8s clusters without any configuration.
 
@@ -69,7 +69,7 @@ kpexec supports shell autocompletion on Bash or Zsh shell. Before setting kpexec
 
 Set kpexec shell autocompletion to bash shell through the following commands.
 ```bash
-$ source <(kpexec --completion bash) 
+$ source <(kpexec --completion bash)
 $ sudo sh -c "echo 'source <(kpexec --completion bash)' >>~/.bashrc"
 ```
 
@@ -77,11 +77,11 @@ $ sudo sh -c "echo 'source <(kpexec --completion bash)' >>~/.bashrc"
 
 Set kpexec shell autocompletion to zsh shell through the following commands.
 ```bash
-$ source <(kpexec --completion zsh) 
+$ source <(kpexec --completion zsh)
 $ sudo sh -c "echo 'source <(kpexec --completion zsh)' >>~/.zshrc"
 ```
 
-## Usage 
+## Usage
 
 Below are examples of kpexec usage.
 ```bash
@@ -93,7 +93,7 @@ $ kubectl pexec mypod -- date
 $ kpexec -n mynamespace mypod -c date-container -- date
 $ kubectl pexec -n mynamespace mypod -c date-container -- date
 
-# Switch to raw terminal mode, sends stdin to 'bash' in bash-container from pod mypod 
+# Switch to raw terminal mode, sends stdin to 'bash' in bash-container from pod mypod
 # and sends stdout/stderr from 'bash' back to the client.
 $ kpexec -it mypod -c bash-container -- bash
 $ kubectl pexec -it mypod -c bash-container -- bash
@@ -103,15 +103,15 @@ $ kpexec -it -T mypod -c bash-container -- bash
 $ kubectl pexec -it -T mypod -c bash-container -- bash
 
 # Set cnsenter pod's image
-$ kpexec -it -T --cnsenter-image=ssup2/my-cnsenter-tools:latest mypod -c bash-container -- bash
-$ kubectl pexec -it -T --cnsenter-image=ssup2/my-cnsenter-tools:latest mypod -c bash-container -- bash
+$ kpexec -it -T --cnsenter-img=ssup2/my-cnsenter-tools:latest mypod -c bash-container -- bash
+$ kubectl pexec -it -T --cnsenter-img=ssup2/my-cnsenter-tools:latest mypod -c bash-container -- bash
 
 # Set CRI socket path / containerd socket path
 $ kpexec -it -T --cri /run/my/containerd.sock -c bash-container -- bash
 $ kubectl pexec -it -T --cri /run/my/containerd.sock -c bash-container -- bash
 
-# kpexec removes the cnsetner pod it created after executing the command. 
-# If cnsenter pods remain due to external factors, you can remove all remaining cnsenter pods 
+# kpexec removes the cnsetner pod it created after executing the command.
+# If cnsenter pods remain due to external factors, you can remove all remaining cnsenter pods
 # by executing cnsenter garbage collector.
 $ kpexec --cnsenter-gc
 $ kubectl pexec --cnsenter-gc
@@ -123,6 +123,6 @@ $ kubectl pexec --cnsenter-gc
 
 The figure above shows the operation processs of kpexec. At first, kpexec obtains the information of target pod from K8s API Server and finds out which Node the target pod exists in. After that, kpexec creates a cnsenter pod in the node where target pod exists and executes cnsetner. cnsenter gets the target container's pid and root directory information from container runtime through CRI (Container Runtime Interface). Then cnsetner executes the command in the target container based on the obtained information.
 
-cnsenter pod uses the below images defaultly. The cnsenter pod image can be set with the '--cnsetner-image' option.
+cnsenter pod uses the below images defaultly. The cnsenter pod image can be set with the '--cnsenter-img' option.
 * default mode - ssup2/cnsenter:[kpexec version]
 * tools mode - ssup2/cnsenter-tools:[kpexec version]
