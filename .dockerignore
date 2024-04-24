@@ -1,0 +1,5 @@
+.github
+.gitignore
+.goreleaser
+.krew.yaml
+dist
