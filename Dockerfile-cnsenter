@@ -9,9 +9,9 @@ RUN CGO_ENABLED=0 GO111MODULE=on go build -a -ldflags="-X 'github.com/ssup2/kpex
 FROM alpine:3.13.1 as downloader
 ARG TARGETPLATFORM
 ENV CRICTL_VERSION v1.24.1
-RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then ARCHITECTURE=arm; else ARCHITECTURE=amd64; fi \  
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then ARCHITECTURE=arm64; else ARCHITECTURE=amd64; fi \  
     && wget https://github.com/kubernetes-sigs/cri-tools/releases/download/${CRICTL_VERSION}/crictl-${CRICTL_VERSION}-linux-${ARCHITECTURE}.tar.gz
-RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then ARCHITECTURE=arm; else ARCHITECTURE=amd64; fi \  
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then ARCHITECTURE=arm64; else ARCHITECTURE=amd64; fi \  
     && tar zxvf crictl-${CRICTL_VERSION}-linux-${ARCHITECTURE}.tar.gz -C /usr/local/bin
 
 # Build image
