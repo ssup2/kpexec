@@ -14,7 +14,7 @@ image:
 # goreleaser version 0.184.0
 .PHONY: release
 release:
-	goreleaser --rm-dist
+	goreleaser release --clean
 
 .PHONY: clean
 clean:

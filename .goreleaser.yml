@@ -1,6 +1,9 @@
+version: 2
+
 before:
   hooks:
     - go mod download
+
 builds:
   - id: kpexec
     main: ./cmd/kpexec/main.go
@@ -14,9 +17,9 @@ builds:
     goarch:
       - amd64
       - arm64
-    ignore: []
     ldflags:
       - -X github.com/ssup2/kpexec/pkg/cmd/kpexec.version={{ .Tag }}
+
   - id: kubectl-pexec
     main: ./cmd/kpexec/main.go
     binary: kubectl-pexec
@@ -29,35 +32,31 @@ builds:
     goarch:
       - amd64
       - arm64
-    ignore: []
     ldflags:
       - -X github.com/ssup2/kpexec/pkg/cmd/kpexec.version={{ .Tag }}
       - -X github.com/ssup2/kpexec/pkg/cmd/kpexec.build=kubectlPlugin
+
 archives:
   - id: kpexec
     builds:
       - kpexec
     name_template: "kpexec_v{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
-    replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
+
   - id: kubectl-pexec
     builds:
       - kubectl-pexec
     name_template: "kubectl_pexec_v{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
-    replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
+
 checksum:
   name_template: checksums.txt
+
 changelog:
   sort: asc
+
 brews:
   - name: kpexec
     ids:
       - kpexec
-    tap:
+    repository:
       owner: ssup2
       name: homebrew-tap
