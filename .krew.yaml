@@ -25,32 +25,38 @@ spec:
   version: "{{ .TagName }}"
   platforms:
   - bin: kubectl-pexec
-    {{addURIAndSha "https://github.com/ssup2/kpexec/releases/download/{{ .TagName }}/kubectl_pexec_{{ .TagName }}_Linux_amd64.tar.gz" .TagName }}
+    {{addURIAndSha "https://github.com/ssup2/kpexec/releases/download/{{ .TagName }}/kubectl_pexec_{{ .TagName }}_linux_amd64.tar.gz" .TagName }}
     selector:
       matchLabels:
         os: linux
         arch: amd64
   - bin: kubectl-pexec
-    {{addURIAndSha "https://github.com/ssup2/kpexec/releases/download/{{ .TagName }}/kubectl_pexec_{{ .TagName }}_Linux_arm64.tar.gz" .TagName }}
+    {{addURIAndSha "https://github.com/ssup2/kpexec/releases/download/{{ .TagName }}/kubectl_pexec_{{ .TagName }}_linux_arm64.tar.gz" .TagName }}
     selector:
       matchLabels:
         os: linux
         arch: arm64
   - bin: kubectl-pexec
-    {{addURIAndSha "https://github.com/ssup2/kpexec/releases/download/{{ .TagName }}/kubectl_pexec_{{ .TagName }}_Darwin_amd64.tar.gz" .TagName }}
+    {{addURIAndSha "https://github.com/ssup2/kpexec/releases/download/{{ .TagName }}/kubectl_pexec_{{ .TagName }}_darwin_amd64.tar.gz" .TagName }}
     selector:
       matchLabels:
         os: darwin
         arch: amd64
   - bin: kubectl-pexec
-    {{addURIAndSha "https://github.com/ssup2/kpexec/releases/download/{{ .TagName }}/kubectl_pexec_{{ .TagName }}_Darwin_arm64.tar.gz" .TagName }}
+    {{addURIAndSha "https://github.com/ssup2/kpexec/releases/download/{{ .TagName }}/kubectl_pexec_{{ .TagName }}_darwin_arm64.tar.gz" .TagName }}
     selector:
       matchLabels:
         os: darwin
         arch: arm64
   - bin: kubectl-pexec.exe
-    {{addURIAndSha "https://github.com/ssup2/kpexec/releases/download/{{ .TagName }}/kubectl_pexec_{{ .TagName }}_Windows_amd64.tar.gz" .TagName }}
+    {{addURIAndSha "https://github.com/ssup2/kpexec/releases/download/{{ .TagName }}/kubectl_pexec_{{ .TagName }}_windows_amd64.tar.gz" .TagName }}
     selector:
       matchLabels:
         os: windows
         arch: amd64
+  - bin: kubectl-pexec.exe
+    {{addURIAndSha "https://github.com/ssup2/kpexec/releases/download/{{ .TagName }}/kubectl_pexec_{{ .TagName }}_windows_amd64.tar.gz" .TagName }}
+    selector:
+      matchLabels:
+        os: windows
+        arch: arm64
